@@ -319,7 +319,7 @@ async function notifyHeadForPR(department, prNumber, requester) {
         const dept = departments.find(d => d.name === department);
 
         if (dept && dept.head_email) {
-            // Use a simple text-based notification since HTML links may not work
+            const adminUrl = 'https://bwppr.vercel.app/admin.html';
             await sendEmail(
                 dept.head_email,
                 `[New PR] แผนก${department} ขอตรวจสอบ PR: ${prNumber}`,
@@ -327,7 +327,7 @@ async function notifyHeadForPR(department, prNumber, requester) {
                 <p>มีรายการขอซื้อใหม่จาก <b>${requester}</b></p>
                 <p>เลขที่ PR: <b>${prNumber}</b></p>
                 <br>
-                <p>กรุณาเข้าสู่ระบบอนุมัติที่ admin.html เพื่อตรวจสอบและอนุมัติ</p>`
+                <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบอนุมัติ</a></p>`
             );
         }
     } catch (err) {
