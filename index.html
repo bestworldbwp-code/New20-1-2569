@@ -13,6 +13,46 @@
     <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
         <!-- Header -->
         <div class="text-center mb-3">
+            <div id="logoContainer" style="margin-bottom: 20px;">
+                <img id="companyLogo" src="" alt="Company Logo" style="max-height: 120px; display: none;">
+                <div id="defaultLogo"
+                    style="width: 100px; height: 100px; background: linear-gradient(135deg, #4361ee, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 48px; color: white;">
+                    📄
+                </div>
+            </div>
+            <h1 style="color: white; font-size: 2rem; margin-bottom: 8px;">ระบบเอกสารออนไลน์</h1>
+            <p style="color: rgba(255,255,255,0.8); font-size: 1.1rem;">บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</p>
+        </div>
+
+        <!-- Menu Grid -->
+        <div class="menu-grid">
+            <!-- PR -->
+            <a href="pr.html" class="menu-card">
+                <div class="icon primary">📦</div>
+                <h3>ขอซื้อสินค้า (PR)</h3>
+                <p>สร้างใบขอซื้อเพื่อขออนุมัติ</p>
+            </a>
+
+            <!-- Memo -->
+            <a href="memo.html" class="menu-card">
+                <div class="icon success">📝</div>
+                <h3>บันทึกข้อความ (Memo)</h3>
+                <p>สร้างบันทึกข้อความภายใน</p>
+            </a>
+
+            <!-- Admin -->
+            <a href="admin.html" class="menu-card">
+                <div class="icon dark">🔐</div>
+                <h3>สำหรับผู้อนุมัติ</h3>
+                <p>ตรวจสอบและอนุมัติเอกสาร</p>
+            </a>
+
+            <!-- Super Admin -->
+            <a href="super-admin.html" class="menu-card">
+                <div class="icon danger">⚙️</div>
+                <h3>Super Admin</h3>
+                <p>จัดการแผนก และตั้งค่าระบบ</p>
+            </a>
         </div>
 
         <!-- Footer -->
@@ -20,6 +60,18 @@
             <p>© 2026 PR System v2.0 | Powered by Supabase</p>
         </div>
     </div>
+    <script src="js/logo.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof LOGO_BASE64 !== 'undefined') {
+                const logoImg = document.getElementById('companyLogo');
+                const defaultLogo = document.getElementById('defaultLogo');
+                logoImg.src = LOGO_BASE64;
+                logoImg.style.display = 'inline-block';
+                defaultLogo.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 
 </html>
