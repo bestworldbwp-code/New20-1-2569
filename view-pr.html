@@ -205,6 +205,105 @@
             background: #fef2f2;
         }
 
+        /* Mobile Responsive */
+        @media screen and (max-width: 768px) {
+            .no-print {
+                top: 10px;
+                padding: 8px 16px;
+                gap: 8px;
+            }
+
+            .no-print button {
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+
+            .pages-container {
+                padding: 60px 10px 20px;
+            }
+
+            .page {
+                width: 100%;
+                min-height: auto;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .header h2 {
+                font-size: 14px;
+            }
+
+            .header h3 {
+                font-size: 13px;
+            }
+
+            .header small {
+                font-size: 10px;
+            }
+
+            .info-box {
+                padding: 10px;
+            }
+
+            .info-row {
+                flex-direction: column;
+                margin-bottom: 10px;
+            }
+
+            .info-row strong {
+                width: 100%;
+                margin-bottom: 2px;
+                font-size: 12px;
+            }
+
+            .info-row span {
+                font-size: 13px;
+            }
+
+            table {
+                font-size: 11px;
+            }
+
+            th,
+            td {
+                padding: 6px 4px;
+                font-size: 11px;
+            }
+
+            .signature-area {
+                flex-direction: column;
+                gap: 25px;
+                align-items: center;
+            }
+
+            .sign-box {
+                width: 80%;
+            }
+
+            .sign-box .label {
+                margin-bottom: 20px;
+            }
+
+            .remark-box {
+                padding: 10px;
+                font-size: 13px;
+            }
+
+            .footer-text {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                text-align: right;
+                margin-top: 20px;
+            }
+
+            .mode-label {
+                display: block;
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+
         @media print {
             @page {
                 size: A4;
