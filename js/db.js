@@ -425,9 +425,23 @@ async function exportPRToCSV() {
     csv += 'วันที่ขอ,เลขที่ PR,ผู้ขอซื้อ,แผนก,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
 
     data.forEach(row => {
-        const createdAt = new Date(row.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
-        const headApproved = row.head_approved_at ? new Date(row.head_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
-        const managerApproved = row.manager_approved_at ? new Date(row.manager_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
+        // Use UI helpers for consistency if available, otherwise manual offset
+        const formatD = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+        };
+        const formatDT = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}:${String(th.getUTCSeconds()).padStart(2, '0')}`;
+        };
+
+        const createdAt = formatD(row.created_at);
+        const headApproved = formatDT(row.head_approved_at);
+        const managerApproved = formatDT(row.manager_approved_at);
 
         csv += `${createdAt},"${row.pr_number}","${row.requester}","${row.department}","${row.status}","${headApproved}","${managerApproved}"\n`;
     });
@@ -448,8 +462,13 @@ async function exportMemoToCSV() {
     csv += 'วันที่,เลขที่ Memo,จาก,ถึง,เรื่อง,สถานะ\n';
 
     data.forEach(row => {
-        const date = row.date ? new Date(row.date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
-        csv += `${date},"${row.memo_no}","${row.from_dept}","${row.to_dept || '-'}","${row.subject}","${row.status}"\n`;
+        const dateObj = row.date ? new Date(row.date) : null;
+        let dateStr = '-';
+        if (dateObj && !isNaN(dateObj.getTime())) {
+            const th = new Date(dateObj.getTime() + (7 * 3600000));
+            dateStr = `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+        }
+        csv += `${dateStr},"${row.memo_no}","${row.from_dept}","${row.to_dept || '-'}","${row.subject}","${row.status}"\n`;
     });
 
     return csv;

@@ -153,34 +153,39 @@ function isValidEmail(email) {
 
 function formatDate(isoString) {
     if (!isoString) return '-';
-    const d = new Date(isoString);
-    return d.toLocaleDateString('th-TH', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        timeZone: 'Asia/Bangkok'
-    });
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '-';
+    // Shift to Thai time (UTC+7)
+    const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    const d = thDate.getUTCDate();
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const m = months[thDate.getUTCMonth()];
+    const y = thDate.getUTCFullYear() + 543;
+    return `${d} ${m} ${y}`;
 }
 
 function formatDateTime(isoString) {
     if (!isoString) return '-';
-    const d = new Date(isoString);
-    return d.toLocaleString('th-TH', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Bangkok'
-    }).replace(',', '');
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '-';
+    // Shift to Thai time (UTC+7)
+    const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    const d = String(thDate.getUTCDate()).padStart(2, '0');
+    const m = String(thDate.getUTCMonth() + 1).padStart(2, '0');
+    const y = thDate.getUTCFullYear() + 543;
+    const hh = String(thDate.getUTCHours()).padStart(2, '0');
+    const mm = String(thDate.getUTCMinutes()).padStart(2, '0');
+    const ss = String(thDate.getUTCSeconds()).padStart(2, '0');
+    return `${d}/${m}/${y} ${hh}:${mm}:${ss}`;
 }
 
 function getTodayDate() {
-    const options = { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' };
-    const formatter = new Intl.DateTimeFormat('en-CA', options);
-    return formatter.format(new Date());
+    const date = new Date();
+    const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
+    const y = thDate.getUTCFullYear();
+    const m = String(thDate.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(thDate.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 // ============================================
