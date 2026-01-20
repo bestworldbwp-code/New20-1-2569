@@ -153,7 +153,12 @@ function isValidEmail(email) {
 
 function formatDate(isoString) {
     if (!isoString) return '-';
-    const date = new Date(isoString);
+    // Normalize: If no timezone info, assume it's UTC and append Z
+    let normalizedStr = isoString;
+    if (typeof isoString === 'string' && !isoString.endsWith('Z') && !isoString.includes('+')) {
+        normalizedStr = isoString + 'Z';
+    }
+    const date = new Date(normalizedStr);
     if (isNaN(date.getTime())) return '-';
     // Shift to Thai time (UTC+7)
     const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
@@ -166,7 +171,12 @@ function formatDate(isoString) {
 
 function formatDateTime(isoString) {
     if (!isoString) return '-';
-    const date = new Date(isoString);
+    // Normalize: If no timezone info, assume it's UTC and append Z
+    let normalizedStr = isoString;
+    if (typeof isoString === 'string' && !isoString.endsWith('Z') && !isoString.includes('+')) {
+        normalizedStr = isoString + 'Z';
+    }
+    const date = new Date(normalizedStr);
     if (isNaN(date.getTime())) return '-';
     // Shift to Thai time (UTC+7)
     const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
