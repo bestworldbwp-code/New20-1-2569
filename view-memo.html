@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดบันทึกข้อความ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #525659;
+            font-family: 'Sarabun', sans-serif;
+            color: #000;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .no-print button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-print {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-close {
+            background: #6b7280;
+            color: white;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 80px auto 40px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .header h3 {
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .memo-info {
+            margin-bottom: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .info-row .label {
+            width: 80px;
+            font-weight: 600;
+        }
+
+        .info-row .value {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+            padding-left: 10px;
+        }
+
+        .info-row-double {
+            display: flex;
+        }
+
+        .info-row-double .part {
+            flex: 1;
+            display: flex;
+        }
+
+        .content-box {
+            min-height: 350px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            text-align: justify;
+            margin-bottom: 30px;
+        }
+
+        .attachment-box {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .attachment-box a {
+            color: #4361ee;
+            text-decoration: none;
+        }
+
+        .signature-area {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+
+        .sign-box {
+            text-align: center;
+            width: 150px;
+        }
+
+        .sign-box .label {
+            font-weight: 600;
+            margin-bottom: 50px;
+        }
+
+        .sign-box .line {
+            border-bottom: 1px dotted #000;
+            margin-bottom: 5px;
+        }
+
+        .sign-box .name {
+            font-size: 12px;
+            min-height: 30px;
+        }
+
+        .text-success {
+            color: #10b981;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ / บันทึก PDF</button>
+        <button class="btn-close" onclick="window.close()">ปิดหน้าต่าง</button>
+    </div>
+
+    <div class="page" id="pageContent">
+        <div class="text-center" style="padding: 100px;">กำลังโหลด...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script>
+        async function loadMemo() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+
+            if (!id) {
+                document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">ไม่พบข้อมูล</p>';
+                return;
+            }
+
+            try {
+                const memo = await DB.getMemoById(id);
+
+                const memoDate = new Date(memo.date).toLocaleDateString('th-TH');
+                const headApproved = memo.status !== 'pending_head' && memo.status !== 'pending';
+                const managerApproved = memo.status === 'processed';
+
+                const attachmentHtml = memo.attachment_url
+                    ? `<div class="attachment-box"><strong>เอกสารแนบ:</strong> <a href="${memo.attachment_url}" target="_blank">เปิดดูเอกสาร</a></div>`
+                    : '';
+
+                document.getElementById('pageContent').innerHTML = `
+                    <div class="header">
+                        <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
+                        <h3>บันทึกข้อความ</h3>
+                    </div>
+                    
+                    <div class="memo-info">
+                        <div class="info-row">
+                            <span class="label">หน่วยงาน</span>
+                            <span class="value">${memo.from_dept}</span>
+                        </div>
+                        <div class="info-row-double">
+                            <div class="part">
+                                <span class="label">ที่</span>
+                                <span class="value" style="flex: 1; border-bottom: 1px dotted #000; padding-left: 10px;">${memo.memo_no}</span>
+                            </div>
+                            <div class="part">
+                                <span class="label" style="text-align: right; padding-right: 10px;">วันที่</span>
+                                <span class="value" style="flex: 1; border-bottom: 1px dotted #000; padding-left: 10px;">${memoDate}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">เรื่อง</span>
+                            <span class="value">${memo.subject}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">เรียน</span>
+                            <span class="value" style="font-weight: 600;">${memo.to_dept}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="content-box">${memo.content}</div>
+                    
+                    ${attachmentHtml}
+                    
+                    <div class="signature-area">
+                        <div class="sign-box">
+                            <div class="label">ผู้จัดทำ</div>
+                            <div class="name" style="color: #4361ee; font-weight: 600;">เจ้าหน้าที่แผนก${memo.from_dept}</div>
+                            <div class="line"></div>
+                        </div>
+                        <div class="sign-box">
+                            <div class="label">ผู้อนุมัติเบื้องต้น</div>
+                            <div class="name">
+                                ${headApproved
+                        ? '( ผู้จัดการแผนก )<br><span class="text-success" style="font-size: 11px;">อนุมัติออนไลน์</span>'
+                        : '( ........................... )'}
+                            </div>
+                            <div class="line"></div>
+                        </div>
+                        <div class="sign-box">
+                            <div class="label">ผู้อนุมัติระดับสูง</div>
+                            <div class="name">
+                                ${managerApproved
+                        ? '( ผู้บริหาร )<br><span class="text-success" style="font-size: 11px;">อนุมัติออนไลน์</span>'
+                        : '( ........................... )'}
+                            </div>
+                            <div class="line"></div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">เกิดข้อผิดพลาด: ' + err.message + '</p>';
+            }
+        }
+
+        window.onload = loadMemo;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin | ระบบเอกสารออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body style="background: var(--gray-100);">
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div style="font-size: 64px; margin-bottom: 16px;">⚙️</div>
+            <h2>Super Admin</h2>
+            <p>กรุณากรอกรหัส Super Admin</p>
+
+            <div class="form-group">
+                <input type="password" id="passwordInput" class="form-control text-center"
+                    placeholder="รหัส Super Admin" style="font-size: 1.25rem;">
+                <div class="error-message" id="loginError"></div>
+            </div>
+
+            <button class="btn btn-primary w-full btn-lg" onclick="doLogin()">
+                เข้าสู่ระบบ
+            </button>
+
+            <a href="index.html" class="btn btn-outline w-full mt-2">
+                ⬅️ กลับหน้าหลัก
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand">
+                    <div style="font-size: 32px;">⚙️</div>
+                    <div>
+                        <h1 style="font-size: 1.125rem; margin: 0;">Super Admin</h1>
+                        <small class="text-muted">จัดการระบบและแผนก</small>
+                    </div>
+                </div>
+                <div class="navbar-actions">
+                    <a href="index.html" class="btn btn-outline btn-sm">🏠 หน้าหลัก</a>
+                    <button onclick="logout()" class="btn btn-danger btn-sm">ออก</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container" style="padding: 24px 20px;">
+            <div class="row row-2" style="gap: 24px;">
+                <!-- Departments Section -->
+                <div class="card">
+                    <div class="card-header d-flex align-center justify-between">
+                        <h3 style="margin: 0;">🏢 จัดการแผนก</h3>
+                        <button class="btn btn-success btn-sm" onclick="showAddDeptModal()">
+                            ➕ เพิ่มแผนก
+                        </button>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ชื่อแผนก</th>
+                                        <th>รหัสผ่าน</th>
+                                        <th>อีเมลผู้จัดการ</th>
+                                        <th>สถานะ</th>
+                                        <th style="text-align: center;">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deptTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center p-3">กำลังโหลด...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="margin: 0;">🔧 ตั้งค่าระบบ</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div class="form-group">
+                                <label class="form-label">รหัส Super Admin</label>
+                                <input type="text" id="superAdminPassword" class="form-control"
+                                    placeholder="รหัส Super Admin">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">รหัสผู้บริหาร (Manager)</label>
+                                <input type="text" id="managerPassword" class="form-control"
+                                    placeholder="รหัสผู้บริหาร">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">อีเมลผู้บริหาร</label>
+                                <input type="email" id="managerEmail" class="form-control"
+                                    placeholder="manager@email.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">อีเมลฝ่ายจัดซื้อ</label>
+                                <input type="email" id="purchasingEmail" class="form-control"
+                                    placeholder="purchasing@email.com">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-full">
+                                💾 บันทึกการตั้งค่า
+                            </button>
+                        </form>
+
+                        <hr style="margin: 24px 0;">
+
+                        <div class="text-center">
+                            <p class="text-muted mb-2">ข้อมูลระบบ</p>
+                            <p><strong>Supabase URL:</strong><br><small class="text-muted">${CONFIG.supabaseUrl}</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Department Modal -->
+    <div class="modal-overlay" id="deptModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="deptModalTitle">เพิ่มแผนกใหม่</h2>
+                <button class="modal-close" onclick="UI.hideModal('deptModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="deptForm">
+                    <input type="hidden" id="deptId">
+
+                    <div class="form-group">
+                        <label class="form-label">ชื่อแผนก *</label>
+                        <input type="text" id="deptName" class="form-control" required placeholder="เช่น ฝ่ายบัญชี">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">รหัสผ่าน *</label>
+                        <input type="text" id="deptPassword" class="form-control" required placeholder="เช่น 1001">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">อีเมลผู้จัดการแผนก</label>
+                        <input type="email" id="deptEmail" class="form-control" placeholder="head@email.com">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="UI.hideModal('deptModal')">ยกเลิก</button>
+                <button class="btn btn-success" onclick="saveDepartment()">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        let isEditing = false;
+
+        // Enter key for login
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') doLogin();
+            });
+
+            // Check if already logged in as super admin
+            if (sessionStorage.getItem('isSuperAdmin') === 'true') {
+                showMainContent();
+            }
+        });
+
+        // Login
+        async function doLogin() {
+            const password = document.getElementById('passwordInput').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            if (!password) {
+                errorEl.textContent = 'กรุณากรอกรหัสผ่าน';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            try {
+                if (await DB.validateSuperAdminPassword(password)) {
+                    sessionStorage.setItem('isSuperAdmin', 'true');
+                    showMainContent();
+                } else {
+                    errorEl.textContent = 'รหัสผ่านไม่ถูกต้อง';
+                    errorEl.classList.add('show');
+                }
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                errorEl.classList.add('show');
+            }
+        }
+
+        function showMainContent() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            loadDepartments();
+            loadSettings();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('isSuperAdmin');
+            window.location.reload();
+        }
+
+        // Load Departments
+        async function loadDepartments() {
+            const tbody = document.getElementById('deptTableBody');
+
+            try {
+                const departments = await DB.getAllDepartments();
+
+                if (departments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3">ไม่มีแผนก</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = departments.map(dept => `
+                    <tr>
+                        <td><strong>${dept.name}</strong></td>
+                        <td><code>${dept.password}</code></td>
+                        <td>${dept.head_email || '-'}</td>
+                        <td>
+                            ${dept.is_active
+                        ? '<span class="badge badge-success">ใช้งาน</span>'
+                        : '<span class="badge badge-secondary">ปิดใช้งาน</span>'}
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-outline btn-sm" onclick="editDepartment('${dept.id}', '${dept.name}', '${dept.password}', '${dept.head_email || ''}')">
+                                ✏️
+                            </button>
+                            ${dept.is_active
+                        ? `<button class="btn btn-danger btn-sm" onclick="deleteDepartment('${dept.id}', '${dept.name}')">🗑️</button>`
+                        : `<button class="btn btn-success btn-sm" onclick="activateDepartment('${dept.id}')">✅</button>`
+                    }
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+            }
+        }
+
+        // Load Settings
+        async function loadSettings() {
+            try {
+                const superPassword = await DB.getSetting('super_admin_password');
+                const managerPassword = await DB.getSetting('manager_password');
+                const managerEmail = await DB.getSetting('manager_email');
+                const purchasingEmail = await DB.getSetting('purchasing_email');
+
+                document.getElementById('superAdminPassword').value = superPassword || '';
+                document.getElementById('managerPassword').value = managerPassword || '';
+                document.getElementById('managerEmail').value = managerEmail || '';
+                document.getElementById('purchasingEmail').value = purchasingEmail || '';
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Save Settings
+        document.getElementById('settingsForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                await DB.setSetting('super_admin_password', document.getElementById('superAdminPassword').value.trim());
+                await DB.setSetting('manager_password', document.getElementById('managerPassword').value.trim());
+                await DB.setSetting('manager_email', document.getElementById('managerEmail').value.trim());
+                await DB.setSetting('purchasing_email', document.getElementById('purchasingEmail').value.trim());
+
+                UI.hideLoading();
+                UI.showToast('บันทึกการตั้งค่าเรียบร้อย', 'success');
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        });
+
+        // Department CRUD
+        function showAddDeptModal() {
+            isEditing = false;
+            document.getElementById('deptModalTitle').textContent = 'เพิ่มแผนกใหม่';
+            document.getElementById('deptId').value = '';
+            document.getElementById('deptName').value = '';
+            document.getElementById('deptPassword').value = '';
+            document.getElementById('deptEmail').value = '';
+            UI.showModal('deptModal');
+        }
+
+        function editDepartment(id, name, password, email) {
+            isEditing = true;
+            document.getElementById('deptModalTitle').textContent = 'แก้ไขแผนก';
+            document.getElementById('deptId').value = id;
+            document.getElementById('deptName').value = name;
+            document.getElementById('deptPassword').value = password;
+            document.getElementById('deptEmail').value = email;
+            UI.showModal('deptModal');
+        }
+
+        async function saveDepartment() {
+            const name = document.getElementById('deptName').value.trim();
+            const password = document.getElementById('deptPassword').value.trim();
+            const email = document.getElementById('deptEmail').value.trim();
+
+            if (!name || !password) {
+                UI.showToast('กรุณากรอกชื่อแผนกและรหัสผ่าน', 'error');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                if (isEditing) {
+                    const id = document.getElementById('deptId').value;
+                    await DB.updateDepartment(id, { name, password, head_email: email });
+                } else {
+                    await DB.addDepartment(name, password, email);
+                }
+
+                UI.hideLoading();
+                UI.hideModal('deptModal');
+                UI.showToast(isEditing ? 'แก้ไขแผนกเรียบร้อย' : 'เพิ่มแผนกเรียบร้อย', 'success');
+                loadDepartments();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteDepartment(id, name) {
+            if (!confirm(`ต้องการปิดใช้งานแผนก "${name}" หรือไม่?`)) return;
+
+            try {
+                UI.showLoading('กำลังลบ...');
+                await DB.deleteDepartment(id);
+                UI.hideLoading();
+                UI.showToast('ปิดใช้งานแผนกเรียบร้อย', 'warning');
+                loadDepartments();
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        async function activateDepartment(id) {
+            try {
+                UI.showLoading('กำลังเปิดใช้งาน...');
+                await DB.updateDepartment(id, { is_active: true });
+                UI.hideLoading();
+                UI.showToast('เปิดใช้งานแผนกเรียบร้อย', 'success');
+                loadDepartments();
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

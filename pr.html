@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบขอซื้อ (PR) | ระบบเอกสารออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container" style="padding: 30px 20px;">
+        <!-- Form Section -->
+        <div class="card" id="formSection" style="max-width: 900px; margin: 0 auto;">
+            <div class="card-header">
+                <div class="d-flex align-center justify-between">
+                    <a href="index.html" class="btn btn-outline btn-sm">⬅️ กลับหน้าหลัก</a>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Header -->
+                <div class="text-center mb-3">
+                    <div style="font-size: 48px; margin-bottom: 8px;">📦</div>
+                    <h2 style="margin-bottom: 4px;">บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
+                    <h3 class="text-primary">ใบขอซื้อ (Purchase Request)</h3>
+                </div>
+
+                <form id="prForm">
+                    <!-- Basic Info -->
+                    <div class="row row-2">
+                        <div class="form-group">
+                            <label class="form-label">หน่วยงาน *</label>
+                            <select id="department" class="form-control form-select" required>
+                                <option value="" disabled selected>-- กรุณาเลือก --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">เลขที่ PR *</label>
+                            <input type="text" id="pr_number" class="form-control" required
+                                placeholder="เช่น PR-2025/001">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">ผู้ขอซื้อ *</label>
+                        <input type="text" id="requester" class="form-control" required placeholder="ชื่อ-นามสกุล">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">วันที่ต้องการสินค้า *</label>
+                        <input type="date" id="required_date" class="form-control" required>
+                    </div>
+
+                    <!-- Items Section -->
+                    <hr style="margin: 24px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+                    <div class="d-flex align-center justify-between mb-2">
+                        <h4>📦 รายการสินค้า</h4>
+                        <button type="button" class="btn btn-success btn-sm" onclick="addItemRow()">
+                            ➕ เพิ่มรายการ
+                        </button>
+                    </div>
+
+                    <div id="itemsContainer"></div>
+
+                    <!-- Remark & Attachment -->
+                    <div class="form-group mt-2">
+                        <label class="form-label">หมายเหตุ</label>
+                        <textarea id="header_remark" class="form-control" rows="2"
+                            placeholder="ระบุหมายเหตุเพิ่มเติม..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">แนบไฟล์ (ถ้ามี)</label>
+                        <input type="file" id="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-lg w-full mt-2" id="btnSubmit">
+                        🚀 ส่งคำขออนุมัติ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Success Section -->
+        <div class="card" id="successSection" style="max-width: 600px; margin: 0 auto; display: none;">
+            <div class="card-body text-center p-3">
+                <div style="font-size: 80px; margin-bottom: 16px;">✅</div>
+                <h2 class="text-success mb-2">บันทึกข้อมูลเรียบร้อย!</h2>
+                <p class="text-muted mb-3">เอกสารถูกส่งไปยังผู้จัดการแผนกแล้ว</p>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; max-width: 300px; margin: 0 auto;">
+                    <button id="btnPrintPDF" class="btn btn-primary btn-lg">
+                        🖨️ เปิดไฟล์ / สั่งพิมพ์
+                    </button>
+                    <a href="index.html" class="btn btn-outline">
+                        🏠 กลับหน้าหลัก
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        let itemCounter = 0;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function () {
+            await UI.populateDepartmentSelect('department');
+            addItemRow();
+        });
+
+        // Add item row
+        function addItemRow() {
+            const container = document.getElementById('itemsContainer');
+            const rowId = ++itemCounter;
+
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            row.id = `item-row-${rowId}`;
+            row.innerHTML = `
+                <div class="row">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" class="form-control item-code" placeholder="รหัสสินค้า">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" class="form-control item-desc" placeholder="รายละเอียด *" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="number" class="form-control item-qty" placeholder="จำนวน *" required min="1">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" class="form-control item-unit" placeholder="หน่วย">
+                    </div>
+                </div>
+                <div class="remove-btn">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeItemRow(${rowId})">
+                        🗑️ ลบ
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(row);
+        }
+
+        // Remove item row
+        function removeItemRow(id) {
+            const row = document.getElementById(`item-row-${id}`);
+            if (row) {
+                row.remove();
+            }
+        }
+
+        // Form submit
+        document.getElementById('prForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('btnSubmit');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ กำลังบันทึก...';
+
+                // Collect items
+                const items = [];
+                document.querySelectorAll('.item-row').forEach(row => {
+                    const desc = row.querySelector('.item-desc').value.trim();
+                    if (desc) {
+                        items.push({
+                            code: row.querySelector('.item-code').value.trim(),
+                            description: desc,
+                            quantity: row.querySelector('.item-qty').value || '1',
+                            unit: row.querySelector('.item-unit').value.trim() || 'ชิ้น',
+                            status: 'pending',
+                            remark: ''
+                        });
+                    }
+                });
+
+                if (items.length === 0) {
+                    UI.showToast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    return;
+                }
+
+                // Upload file if any
+                let attachmentUrl = null;
+                const fileInput = document.getElementById('attachment');
+                if (fileInput.files.length > 0) {
+                    btn.innerHTML = '⏳ อัปโหลดไฟล์...';
+                    attachmentUrl = await DB.uploadFile(fileInput.files[0], 'pr');
+                }
+
+                // Create PR
+                btn.innerHTML = '⏳ บันทึกข้อมูล...';
+                const prData = {
+                    pr_number: document.getElementById('pr_number').value.trim(),
+                    department: document.getElementById('department').value,
+                    requester: document.getElementById('requester').value.trim(),
+                    required_date: document.getElementById('required_date').value,
+                    header_remark: document.getElementById('header_remark').value.trim(),
+                    items: items,
+                    attachment_url: attachmentUrl,
+                    status: 'pending_head'
+                };
+
+                const newPR = await DB.createPR(prData);
+
+                // Send email notification to department head
+                btn.innerHTML = '⏳ ส่งแจ้งเตือน...';
+                await UI.notifyHeadForPR(prData.department, prData.pr_number, prData.requester);
+
+                // Show success
+                document.getElementById('formSection').style.display = 'none';
+                document.getElementById('successSection').style.display = 'block';
+
+                document.getElementById('btnPrintPDF').onclick = function () {
+                    window.open(`view-pr.html?id=${newPR.id}&mode=original`, '_blank');
+                };
+
+                UI.showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
+
+            } catch (err) {
+                console.error(err);
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    </script>
+</body>
+
+</html>

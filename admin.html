@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | ระบบเอกสารออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body style="background: var(--gray-100);">
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div style="font-size: 64px; margin-bottom: 16px;">🔐</div>
+            <h2>เข้าสู่ระบบอนุมัติ</h2>
+            <p>กรุณากรอกรหัสผ่านของแผนก</p>
+
+            <div class="form-group">
+                <input type="password" id="passwordInput" class="form-control text-center" placeholder="รหัสผ่าน"
+                    inputmode="numeric" style="font-size: 1.25rem; letter-spacing: 4px;">
+                <div class="error-message" id="loginError"></div>
+            </div>
+
+            <button class="btn btn-primary w-full btn-lg" onclick="doLogin()">
+                เข้าสู่ระบบ
+            </button>
+
+            <a href="index.html" class="btn btn-outline w-full mt-2">
+                ⬅️ กลับหน้าหลัก
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand">
+                    <div style="font-size: 32px;">📋</div>
+                    <div>
+                        <h1 style="font-size: 1.125rem; margin: 0;">Admin Dashboard</h1>
+                        <small class="text-muted" id="userInfo">กำลังโหลด...</small>
+                    </div>
+                </div>
+                <div class="navbar-actions">
+                    <button onclick="showAuditLog()" class="btn btn-outline btn-sm">📜 Audit Log</button>
+                    <button onclick="exportCSV()" class="btn btn-success btn-sm">📥 Export CSV</button>
+                    <button onclick="refreshData()" class="btn btn-outline btn-sm">🔄</button>
+                    <button onclick="logout()" class="btn btn-danger btn-sm">ออก</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container" style="padding: 24px 20px;">
+            <!-- Stats Cards -->
+            <div class="row row-4 mb-3" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="card" style="cursor: pointer;" onclick="switchDocType('pr')">
+                    <div class="card-body d-flex align-center gap-2" style="padding: 20px;">
+                        <div
+                            style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">
+                            📦</div>
+                        <div>
+                            <p class="text-muted" style="font-size: 0.875rem; margin: 0;">ใบขอซื้อ (PR)</p>
+                            <h3 id="countPR" style="margin: 0;">-</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="cursor: pointer;" onclick="switchDocType('memo')">
+                    <div class="card-body d-flex align-center gap-2" style="padding: 20px;">
+                        <div
+                            style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--success), #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">
+                            📝</div>
+                        <div>
+                            <p class="text-muted" style="font-size: 0.875rem; margin: 0;">บันทึกข้อความ</p>
+                            <h3 id="countMemo" style="margin: 0;">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Table Card -->
+            <div class="card">
+                <div class="card-header d-flex align-center justify-between">
+                    <h3 style="margin: 0;">
+                        <span id="docTypeLabel">📦 ใบขอซื้อ (PR)</span>
+                    </h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btnPending" class="btn btn-primary btn-sm" onclick="switchTab('pending')">
+                            ⏳ รออนุมัติ
+                        </button>
+                        <button id="btnHistory" class="btn btn-outline btn-sm" onclick="switchTab('history')">
+                            📜 ประวัติ
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>เลขที่เอกสาร</th>
+                                    <th>วันที่</th>
+                                    <th>รายละเอียด</th>
+                                    <th>สถานะ</th>
+                                    <th style="text-align: center;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center p-3">กำลังโหลด...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2 id="modalTitle">ตรวจสอบเอกสาร</h2>
+                <button class="modal-close" onclick="UI.hideModal('detailModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <!-- Buttons will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Log Modal -->
+    <div class="modal-overlay" id="auditModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>📜 Audit Log (ประวัติการกระทำ)</h2>
+                <button class="modal-close" onclick="UI.hideModal('auditModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>เวลา</th>
+                            <th>การกระทำ</th>
+                            <th>เอกสาร</th>
+                            <th>ผู้ทำ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/ui.js"></script>
+    <script>
+        // State
+        let currentDocType = 'pr';
+        let currentTab = 'pending';
+        let currentUserRole = '';
+        let currentUserDept = '';
+        let allDocs = [];
+        let currentDoc = null;
+
+        // Check session on load
+        document.addEventListener('DOMContentLoaded', function () {
+            if (UI.isLoggedIn()) {
+                currentUserRole = UI.getUserRole();
+                currentUserDept = UI.getUserDept();
+                showMainContent();
+            }
+
+            // Enter key for login
+            document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') doLogin();
+            });
+        });
+
+        // Login
+        async function doLogin() {
+            const password = document.getElementById('passwordInput').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            if (!password) {
+                errorEl.textContent = 'กรุณากรอกรหัสผ่าน';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            try {
+                // Check manager password first
+                if (await DB.validateManagerPassword(password)) {
+                    currentUserRole = 'manager';
+                    currentUserDept = 'ALL';
+                    UI.setSession('isAdmin', 'true');
+                    UI.setSession('userRole', 'manager');
+                    UI.setSession('userDept', 'ALL');
+                    showMainContent();
+                    return;
+                }
+
+                // Check department password
+                const dept = await DB.validateDepartmentPassword(password);
+                if (dept) {
+                    currentUserRole = 'head';
+                    currentUserDept = dept.name;
+                    UI.setSession('isAdmin', 'true');
+                    UI.setSession('userRole', 'head');
+                    UI.setSession('userDept', dept.name);
+                    showMainContent();
+                    return;
+                }
+
+                // Invalid password
+                errorEl.textContent = 'รหัสผ่านไม่ถูกต้อง';
+                errorEl.classList.add('show');
+
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                errorEl.classList.add('show');
+            }
+        }
+
+        function showMainContent() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+
+            const roleText = currentUserRole === 'manager' ? 'ผู้บริหารระดับสูง' : `ผู้จัดการแผนก (${currentUserDept})`;
+            document.getElementById('userInfo').textContent = roleText;
+
+            loadData();
+        }
+
+        function logout() {
+            UI.clearSession();
+            window.location.reload();
+        }
+
+        // Data loading
+        async function loadData() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3">⏳ กำลังโหลด...</td></tr>';
+
+            try {
+                // Update counts
+                updateCounts();
+
+                // Load documents
+                const dept = currentUserRole === 'head' ? currentUserDept : null;
+
+                if (currentTab === 'pending') {
+                    const status = currentUserRole === 'head' ? 'pending_head' : 'pending_manager';
+                    if (currentDocType === 'pr') {
+                        allDocs = await DB.getPRsByStatus(status, dept);
+                    } else {
+                        allDocs = await DB.getMemosByStatus(status, dept);
+                    }
+                } else {
+                    if (currentDocType === 'pr') {
+                        allDocs = await DB.getPRHistory(dept);
+                    } else {
+                        allDocs = await DB.getMemoHistory(dept);
+                    }
+                }
+
+                renderTable();
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">เกิดข้อผิดพลาด</td></tr>';
+            }
+        }
+
+        async function updateCounts() {
+            const dept = currentUserRole === 'head' ? currentUserDept : null;
+            const status = currentUserRole === 'head' ? 'pending_head' : 'pending_manager';
+
+            const prCount = await DB.countPendingPR(status, dept);
+            const memoCount = await DB.countPendingMemo(status, dept);
+
+            document.getElementById('countPR').textContent = prCount;
+            document.getElementById('countMemo').textContent = memoCount;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+
+            if (allDocs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted p-3">ไม่พบรายการ</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = '';
+
+            allDocs.forEach(doc => {
+                const row = document.createElement('tr');
+                const docNo = currentDocType === 'pr' ? doc.pr_number : doc.memo_no;
+                const date = UI.formatDate(doc.created_at);
+                const detail = currentDocType === 'pr'
+                    ? `${doc.requester} (${doc.department})`
+                    : `${doc.from_dept} → ${doc.subject}`;
+
+                row.innerHTML = `
+                    <td><strong class="text-primary">${docNo}</strong></td>
+                    <td>${date}</td>
+                    <td>${detail}</td>
+                    <td>${UI.getStatusBadge(doc.status)}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-primary btn-sm" onclick="openDetail('${doc.id}')">
+                            ตรวจสอบ
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function switchDocType(type) {
+            currentDocType = type;
+            document.getElementById('docTypeLabel').textContent = type === 'pr' ? '📦 ใบขอซื้อ (PR)' : '📝 บันทึกข้อความ';
+            loadData();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('btnPending').className = tab === 'pending' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+            document.getElementById('btnHistory').className = tab === 'history' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm';
+            loadData();
+        }
+
+        function refreshData() {
+            loadData();
+            UI.showToast('รีเฟรชข้อมูลแล้ว', 'info');
+        }
+
+        // Detail Modal
+        function openDetail(id) {
+            currentDoc = allDocs.find(d => d.id === id);
+            if (!currentDoc) return;
+
+            const modalBody = document.getElementById('modalBody');
+            const modalFooter = document.getElementById('modalFooter');
+
+            if (currentDocType === 'pr') {
+                renderPRDetail(modalBody, modalFooter);
+            } else {
+                renderMemoDetail(modalBody, modalFooter);
+            }
+
+            UI.showModal('detailModal');
+        }
+
+        function renderPRDetail(body, footer) {
+            const isHistory = currentTab === 'history';
+            const showQtyEdit = currentUserRole === 'head' && !isHistory;
+
+            // Filter items for manager - only show approved items
+            let displayItems = currentDoc.items;
+            if (currentUserRole === 'manager' && !isHistory) {
+                displayItems = currentDoc.items.filter(i => i.status === 'approved');
+            }
+
+            let itemsHtml = '';
+            displayItems.forEach((item, idx) => {
+                const realIdx = currentDoc.items.indexOf(item);
+                let qtyHtml = item.quantity;
+                let actionHtml = '';
+                let reasonHtml = '';
+
+                if (isHistory) {
+                    actionHtml = item.status === 'approved'
+                        ? '<span class="text-success">✅ อนุมัติ</span>'
+                        : '<span class="text-danger">❌ ไม่อนุมัติ</span>';
+                    reasonHtml = item.remark || '-';
+                } else {
+                    if (showQtyEdit) {
+                        qtyHtml = `<input type="number" class="form-control" id="qty-${realIdx}" value="${item.quantity}" style="width: 80px;">`;
+                    }
+                    actionHtml = `
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="check-${realIdx}" checked onchange="toggleItemReason(${realIdx})">
+                            <span id="label-${realIdx}" class="text-success fw-bold">อนุมัติ</span>
+                        </label>`;
+                    reasonHtml = `<input type="text" id="reason-${realIdx}" class="form-control" placeholder="ระบุเหตุผล..." style="display: none;">`;
+                }
+
+                itemsHtml += `
+                    <tr>
+                        <td>${item.code || '-'}</td>
+                        <td>${item.description}</td>
+                        <td class="text-center">${qtyHtml}</td>
+                        <td class="text-center">${item.unit || '-'}</td>
+                        <td class="text-center">${actionHtml}</td>
+                        <td>${reasonHtml}</td>
+                    </tr>`;
+            });
+
+            if (displayItems.length === 0 && currentUserRole === 'manager') {
+                itemsHtml = '<tr><td colspan="6" class="text-center text-danger p-3">⚠️ ไม่มีรายการที่ผ่านการอนุมัติ</td></tr>';
+            }
+
+            body.innerHTML = `
+                <div class="paper-preview">
+                    <div class="text-center mb-2">
+                        <h3>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h3>
+                        <h4 class="text-primary">ใบขอซื้อ (Purchase Request)</h4>
+                    </div>
+                    
+                    <div class="row row-2 mb-2">
+                        <p><strong>เลขที่:</strong> ${currentDoc.pr_number}</p>
+                        <p><strong>วันที่ต้องการ:</strong> <span class="text-danger">${UI.formatDate(currentDoc.required_date)}</span></p>
+                        <p><strong>ผู้ขอซื้อ:</strong> ${currentDoc.requester}</p>
+                        <p><strong>แผนก:</strong> ${currentDoc.department}</p>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>รหัส</th>
+                                    <th>รายการ</th>
+                                    <th>จำนวน</th>
+                                    <th>หน่วย</th>
+                                    <th>ผลพิจารณา</th>
+                                    <th>เหตุผล</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                    
+                    <p class="mt-2"><strong>หมายเหตุ:</strong> ${currentDoc.header_remark || '-'}</p>
+                    
+                    ${currentDoc.attachment_url ? `
+                        <p class="mt-2">
+                            <strong>ไฟล์แนบ:</strong> 
+                            <a href="${currentDoc.attachment_url}" target="_blank" class="text-primary">เปิดดูเอกสาร</a>
+                        </p>` : ''}
+                </div>`;
+
+            if (isHistory) {
+                footer.innerHTML = `
+                    <button class="btn btn-outline" onclick="UI.hideModal('detailModal')">ปิด</button>
+                    <button class="btn btn-primary" onclick="window.open('view-pr.html?id=${currentDoc.id}&mode=original', '_blank')">🖨️ พิมพ์</button>`;
+            } else {
+                footer.innerHTML = `
+                    <div style="flex: 1;">
+                        <input type="text" id="rejectReason" class="form-control" placeholder="เหตุผลที่ตีกลับทั้งใบ (ถ้ามี)">
+                    </div>
+                    <button class="btn btn-danger" onclick="rejectDocument()">❌ ตีกลับ</button>
+                    <button class="btn btn-success" onclick="approveDocument()">✅ อนุมัติ</button>`;
+            }
+        }
+
+        function renderMemoDetail(body, footer) {
+            const isHistory = currentTab === 'history';
+
+            body.innerHTML = `
+                <div class="paper-preview">
+                    <div class="text-center mb-2">
+                        <h3>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h3>
+                        <h4 class="text-success">บันทึกข้อความ (Memo)</h4>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <p><strong>หน่วยงาน:</strong> ${currentDoc.from_dept}</p>
+                        <p><strong>ที่:</strong> ${currentDoc.memo_no} &nbsp;&nbsp; <strong>วันที่:</strong> ${UI.formatDate(currentDoc.date)}</p>
+                        <p><strong>เรื่อง:</strong> ${currentDoc.subject}</p>
+                        <p><strong>เรียน:</strong> ${currentDoc.to_dept}</p>
+                    </div>
+                    
+                    <div style="background: var(--gray-100); padding: 20px; border-radius: 8px; min-height: 200px; white-space: pre-wrap;">
+                        ${currentDoc.content}
+                    </div>
+                    
+                    ${currentDoc.attachment_url ? `
+                        <p class="mt-2">
+                            <strong>ไฟล์แนบ:</strong> 
+                            <a href="${currentDoc.attachment_url}" target="_blank" class="text-primary">เปิดดูเอกสาร</a>
+                        </p>` : ''}
+                </div>`;
+
+            if (isHistory) {
+                footer.innerHTML = `
+                    <button class="btn btn-outline" onclick="UI.hideModal('detailModal')">ปิด</button>
+                    <button class="btn btn-primary" onclick="window.open('view-memo.html?id=${currentDoc.id}', '_blank')">🖨️ พิมพ์</button>`;
+            } else {
+                footer.innerHTML = `
+                    <div style="flex: 1;">
+                        <input type="text" id="rejectReason" class="form-control" placeholder="เหตุผลที่ตีกลับ (ถ้ามี)">
+                    </div>
+                    <button class="btn btn-danger" onclick="rejectDocument()">❌ ตีกลับ</button>
+                    <button class="btn btn-success" onclick="approveDocument()">✅ อนุมัติ</button>`;
+            }
+        }
+
+        function toggleItemReason(idx) {
+            const check = document.getElementById(`check-${idx}`);
+            const reason = document.getElementById(`reason-${idx}`);
+            const label = document.getElementById(`label-${idx}`);
+
+            if (check.checked) {
+                reason.style.display = 'none';
+                reason.value = '';
+                label.textContent = 'อนุมัติ';
+                label.className = 'text-success fw-bold';
+            } else {
+                reason.style.display = 'block';
+                reason.focus();
+                label.textContent = 'ไม่อนุมัติ';
+                label.className = 'text-danger fw-bold';
+            }
+        }
+
+        // Approve/Reject
+        async function approveDocument() {
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                if (currentDocType === 'pr') {
+                    // Collect item decisions
+                    const updatedItems = currentDoc.items.map((item, idx) => {
+                        const check = document.getElementById(`check-${idx}`);
+                        const reason = document.getElementById(`reason-${idx}`);
+                        const qtyInput = document.getElementById(`qty-${idx}`);
+
+                        if (!check) return item; // Item might be filtered out for manager
+
+                        const isApproved = check.checked;
+                        const newQty = qtyInput ? qtyInput.value : item.quantity;
+                        const reasonText = reason ? reason.value : '';
+
+                        if (!isApproved && !reasonText.trim()) {
+                            throw new Error('กรุณาระบุเหตุผลสำหรับรายการที่ไม่อนุมัติ');
+                        }
+
+                        const roleName = currentUserRole === 'head' ? 'ผู้จัดการแผนก' : 'ผู้บริหาร';
+
+                        return {
+                            ...item,
+                            quantity: newQty,
+                            status: isApproved ? 'approved' : 'rejected',
+                            remark: isApproved ? '' : `${reasonText} (โดย ${roleName})`
+                        };
+                    });
+
+                    if (currentUserRole === 'head') {
+                        await DB.approvePRByHead(currentDoc.id, updatedItems, currentUserDept);
+                        await UI.notifyManagerForPR(currentDoc.pr_number, currentDoc.department);
+                    } else {
+                        await DB.approvePRByManager(currentDoc.id, updatedItems);
+                        await UI.notifyPurchasingForApproval(currentDoc.pr_number, currentDoc.id);
+                    }
+                } else {
+                    if (currentUserRole === 'head') {
+                        await DB.approveMemoByHead(currentDoc.id, currentUserDept);
+                    } else {
+                        await DB.approveMemoByManager(currentDoc.id);
+                    }
+                }
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('อนุมัติเรียบร้อย!', 'success');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        async function rejectDocument() {
+            const reason = document.getElementById('rejectReason').value.trim();
+            if (!reason) {
+                UI.showToast('กรุณาระบุเหตุผลที่ตีกลับ', 'error');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                const roleName = currentUserRole === 'head' ? 'ผู้จัดการแผนก' : 'ผู้บริหาร';
+
+                if (currentDocType === 'pr') {
+                    await DB.rejectPR(currentDoc.id, reason, roleName);
+                } else {
+                    await DB.rejectMemo(currentDoc.id, reason, roleName);
+                }
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('ตีกลับเอกสารเรียบร้อย', 'warning');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        // Audit Log
+        async function showAuditLog() {
+            try {
+                const logs = await DB.getAuditLogs(100);
+                const tbody = document.getElementById('auditTableBody');
+
+                if (logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-3">ไม่พบประวัติ</td></tr>';
+                } else {
+                    tbody.innerHTML = logs.map(log => `
+                        <tr>
+                            <td>${UI.formatDateTime(log.created_at)}</td>
+                            <td>${UI.getActionLabel(log.action)}</td>
+                            <td>${log.doc_number || '-'}</td>
+                            <td>${log.user_dept || log.user_role || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                UI.showModal('auditModal');
+            } catch (err) {
+                UI.showToast('โหลด Audit Log ไม่สำเร็จ', 'error');
+            }
+        }
+
+        // Export CSV
+        async function exportCSV() {
+            try {
+                UI.showLoading('กำลังสร้างไฟล์...');
+
+                let csv;
+                let filename;
+
+                if (currentDocType === 'pr') {
+                    csv = await DB.exportPRToCSV();
+                    filename = `PR_Log_${Date.now()}.csv`;
+                } else {
+                    csv = await DB.exportMemoToCSV();
+                    filename = `Memo_Log_${Date.now()}.csv`;
+                }
+
+                if (!csv) {
+                    UI.showToast('ไม่มีข้อมูล', 'warning');
+                    UI.hideLoading();
+                    return;
+                }
+
+                UI.downloadCSV(csv, filename);
+                UI.hideLoading();
+                UI.showToast('ดาวน์โหลดไฟล์เรียบร้อย', 'success');
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

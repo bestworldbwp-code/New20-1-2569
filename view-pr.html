@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดใบขอซื้อ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #525659;
+            font-family: 'Sarabun', sans-serif;
+            color: #000;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .no-print button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-print {
+            background: #4361ee;
+            color: white;
+        }
+
+        .btn-close {
+            background: #6b7280;
+            color: white;
+        }
+
+        .pages-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px 40px;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm 20mm;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .header h3 {
+            font-size: 16px;
+            color: #4361ee;
+        }
+
+        .header small {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .info-box {
+            border: 1px solid #000;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .info-row strong {
+            width: 150px;
+        }
+
+        .info-row span {
+            flex: 1;
+        }
+
+        .text-danger {
+            color: #dc2626;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-success {
+            color: #10b981;
+        }
+
+        .signature-area {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            padding-top: 20px;
+        }
+
+        .sign-box {
+            text-align: center;
+            width: 150px;
+        }
+
+        .sign-box .label {
+            font-weight: 600;
+            margin-bottom: 40px;
+        }
+
+        .sign-box .line {
+            border-bottom: 1px dotted #000;
+            margin-bottom: 5px;
+        }
+
+        .sign-box .name {
+            font-size: 12px;
+            min-height: 40px;
+        }
+
+        .remark-box {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 15mm;
+            right: 20mm;
+            font-size: 10px;
+            color: #999;
+        }
+
+        .mode-label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .mode-approved {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .mode-original {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .item-rejected {
+            background: #fef2f2;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .pages-container {
+                padding: 0;
+            }
+
+            .page {
+                box-shadow: none;
+                margin: 0;
+                page-break-after: always;
+            }
+
+            .page:last-child {
+                page-break-after: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ สั่งพิมพ์ / บันทึก PDF</button>
+        <button class="btn-close" onclick="window.close()">ปิดหน้าต่าง</button>
+    </div>
+
+    <div class="pages-container" id="pagesContainer">
+        <div class="text-center" style="color: white; padding: 40px;">กำลังโหลด...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script>
+        const ITEMS_PER_PAGE = 10;
+
+        async function loadPR() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const mode = params.get('mode') || 'original';
+
+            if (!id) {
+                document.getElementById('pagesContainer').innerHTML = '<p style="color: white; text-align: center; padding: 40px;">ไม่พบข้อมูล</p>';
+                return;
+            }
+
+            try {
+                const pr = await DB.getPRById(id);
+
+                let displayItems = pr.items;
+                if (mode === 'approved') {
+                    displayItems = pr.items.filter(item => item.status === 'approved');
+                }
+
+                const totalPages = Math.ceil(displayItems.length / ITEMS_PER_PAGE) || 1;
+                const container = document.getElementById('pagesContainer');
+                container.innerHTML = '';
+
+                for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+                    const pageItems = displayItems.slice(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE);
+                    const isLastPage = pageNum === totalPages - 1;
+
+                    const pageHtml = generatePageHtml(pr, pageItems, mode, pageNum + 1, totalPages, isLastPage);
+                    container.innerHTML += pageHtml;
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('pagesContainer').innerHTML = '<p style="color: white; text-align: center; padding: 40px;">เกิดข้อผิดพลาด: ' + err.message + '</p>';
+            }
+        }
+
+        function generatePageHtml(pr, items, mode, pageNum, totalPages, isLastPage) {
+            const modeLabel = mode === 'approved'
+                ? '<span class="mode-label mode-approved">รายการที่อนุมัติ</span>'
+                : '<span class="mode-label mode-original">ต้นฉบับ</span>';
+
+            const createdDate = new Date(pr.created_at).toLocaleDateString('th-TH');
+            const requiredDate = new Date(pr.required_date).toLocaleDateString('th-TH');
+
+            let itemsHtml = '';
+            items.forEach((item, idx) => {
+                const globalIdx = (pageNum - 1) * ITEMS_PER_PAGE + idx + 1;
+                const rowClass = item.status === 'rejected' && mode === 'original' ? 'item-rejected' : '';
+
+                let statusHtml = '';
+                if (item.status === 'approved') {
+                    statusHtml = '<span class="text-success">✅ อนุมัติ</span>';
+                } else if (item.status === 'rejected') {
+                    statusHtml = `<span class="text-danger">❌ ไม่อนุมัติ</span><br><small class="text-danger">${item.remark || ''}</small>`;
+                } else {
+                    statusHtml = '<span style="color: #f59e0b;">⏳ รอพิจารณา</span>';
+                }
+
+                itemsHtml += `
+                    <tr class="${rowClass}">
+                        <td class="text-center">${globalIdx}</td>
+                        <td>${item.code || '-'}</td>
+                        <td>${item.description}</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-center">${item.unit || '-'}</td>
+                        <td class="text-center">${statusHtml}</td>
+                    </tr>`;
+            });
+
+            // Fill empty rows
+            for (let i = items.length; i < ITEMS_PER_PAGE; i++) {
+                itemsHtml += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
+            }
+
+            const footerHtml = isLastPage ? generateFooterHtml(pr) : '';
+
+            return `
+                <div class="page">
+                    <div class="header">
+                        <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
+                        <small>328 ม.6 ต.คลองนิยมยาตรา อ.บางบ่อ จ.สมุทรปราการ 10560</small>
+                        <h3>ใบขอซื้อ (Purchase Request) ${modeLabel}</h3>
+                        <div style="text-align: right; margin-top: -20px; font-size: 12px;">หน้า ${pageNum}/${totalPages}</div>
+                    </div>
+                    
+                    <div class="info-box">
+                        <div class="info-row"><strong>เลขที่เอกสาร:</strong> <span>${pr.pr_number}</span></div>
+                        <div class="info-row"><strong>วันที่ขอ:</strong> <span>${createdDate}</span></div>
+                        <div class="info-row"><strong>ผู้ขอซื้อ:</strong> <span>${pr.requester}</span></div>
+                        <div class="info-row"><strong>แผนก:</strong> <span>${pr.department}</span></div>
+                        <div class="info-row"><strong>วันที่ต้องการสินค้า:</strong> <span class="text-danger">${requiredDate}</span></div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 5%;">#</th>
+                                <th style="width: 15%;">รหัส</th>
+                                <th>รายการสินค้า</th>
+                                <th class="text-center" style="width: 10%;">จำนวน</th>
+                                <th class="text-center" style="width: 10%;">หน่วย</th>
+                                <th class="text-center" style="width: 20%;">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    
+                    ${footerHtml}
+                    
+                    <div class="footer-text">FQP-PUR-01:04 Rev.02</div>
+                </div>`;
+        }
+
+        function generateFooterHtml(pr) {
+            const headApproved = pr.status !== 'pending_head' && pr.status !== 'pending';
+            const managerApproved = pr.status === 'processed';
+
+            const headApproveDate = pr.head_approved_at ? new Date(pr.head_approved_at).toLocaleString('th-TH') : '';
+            const managerApproveDate = pr.manager_approved_at ? new Date(pr.manager_approved_at).toLocaleString('th-TH') : '';
+
+            return `
+                <div class="remark-box">
+                    <strong>หมายเหตุ:</strong> ${pr.header_remark || '-'}
+                </div>
+                
+                <div class="signature-area">
+                    <div class="sign-box">
+                        <div class="label">ผู้ขอซื้อ</div>
+                        <div class="name" style="color: #4361ee; font-weight: 600;">${pr.requester}</div>
+                        <div class="line"></div>
+                        <small>วันที่ ${new Date(pr.created_at).toLocaleDateString('th-TH')}</small>
+                    </div>
+                    <div class="sign-box">
+                        <div class="label">ผู้จัดการแผนก</div>
+                        <div class="name">
+                            ${headApproved
+                    ? `( ผจก.แผนก ${pr.department} )<br><span class="text-success" style="font-size: 11px;">อนุมัติออนไลน์</span>${headApproveDate ? `<br><small>${headApproveDate}</small>` : ''}`
+                    : '( ........................... )'}
+                        </div>
+                        <div class="line"></div>
+                    </div>
+                    <div class="sign-box">
+                        <div class="label">ผู้บริหารระดับสูง</div>
+                        <div class="name">
+                            ${managerApproved
+                    ? `( เบญจมาศ ถิ่นจันทร์ )<br><span class="text-success" style="font-size: 11px;">อนุมัติออนไลน์</span>${managerApproveDate ? `<br><small>${managerApproveDate}</small>` : ''}`
+                    : '( ........................... )'}
+                        </div>
+                        <div class="line"></div>
+                    </div>
+                </div>`;
+        }
+
+        window.onload = loadPR;
+    </script>
+</body>
+
+</html>
