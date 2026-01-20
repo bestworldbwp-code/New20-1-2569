@@ -21,7 +21,7 @@
             <div class="card-body">
                 <!-- Header -->
                 <div class="text-center mb-3">
-                    <div style="font-size: 48px; margin-bottom: 8px;">📝</div>
+                    <img id="companyLogo" src="" alt="Company Logo" style="max-height: 80px; margin-bottom: 8px;">
                     <h2 style="margin-bottom: 4px;">บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
                     <h3 class="text-success">บันทึกข้อความ (Memo)</h3>
                 </div>
@@ -83,11 +83,16 @@
     <script src="js/config.js"></script>
     <script src="js/db.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/logo.js"></script>
     <script>
         // Initialize
         document.addEventListener('DOMContentLoaded', async function () {
             await UI.populateDepartmentSelect('from_dept');
             document.getElementById('memo_date').value = UI.getTodayDate();
+            // Set logo
+            if (typeof LOGO_BASE64 !== 'undefined') {
+                document.getElementById('companyLogo').src = LOGO_BASE64;
+            }
         });
 
         // Form submit

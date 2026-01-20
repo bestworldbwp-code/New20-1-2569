@@ -244,6 +244,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/logo.js"></script>
     <script>
         const ITEMS_PER_PAGE = 10;
 
@@ -288,8 +289,8 @@
                 ? '<span class="mode-label mode-approved">รายการที่อนุมัติ</span>'
                 : '<span class="mode-label mode-original">ต้นฉบับ</span>';
 
-            const createdDate = new Date(pr.created_at).toLocaleDateString('th-TH');
-            const requiredDate = new Date(pr.required_date).toLocaleDateString('th-TH');
+            const createdDate = new Date(pr.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
+            const requiredDate = new Date(pr.required_date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
 
             let itemsHtml = '';
             items.forEach((item, idx) => {
@@ -326,6 +327,7 @@
             return `
                 <div class="page">
                     <div class="header">
+                        ${typeof LOGO_BASE64 !== 'undefined' ? `<img src="${LOGO_BASE64}" alt="Company Logo" style="max-height: 60px; margin-bottom: 8px;">` : ''}
                         <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
                         <small>328 ม.6 ต.คลองนิยมยาตรา อ.บางบ่อ จ.สมุทรปราการ 10560</small>
                         <h3>ใบขอซื้อ (Purchase Request) ${modeLabel}</h3>
@@ -364,8 +366,8 @@
             const headApproved = pr.status !== 'pending_head' && pr.status !== 'pending';
             const managerApproved = pr.status === 'processed';
 
-            const headApproveDate = pr.head_approved_at ? new Date(pr.head_approved_at).toLocaleString('th-TH') : '';
-            const managerApproveDate = pr.manager_approved_at ? new Date(pr.manager_approved_at).toLocaleString('th-TH') : '';
+            const headApproveDate = pr.head_approved_at ? new Date(pr.head_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '';
+            const managerApproveDate = pr.manager_approved_at ? new Date(pr.manager_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '';
 
             return `
                 <div class="remark-box">
@@ -377,7 +379,7 @@
                         <div class="label">ผู้ขอซื้อ</div>
                         <div class="name" style="color: #4361ee; font-weight: 600;">${pr.requester}</div>
                         <div class="line"></div>
-                        <small>วันที่ ${new Date(pr.created_at).toLocaleDateString('th-TH')}</small>
+                        <small>วันที่ ${new Date(pr.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}</small>
                     </div>
                     <div class="sign-box">
                         <div class="label">ผู้จัดการแผนก</div>

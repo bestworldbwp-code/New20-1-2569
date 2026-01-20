@@ -169,12 +169,15 @@ function formatDateTime(isoString) {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Bangkok'
     });
 }
 
 function getTodayDate() {
-    return new Date().toISOString().split('T')[0];
+    const options = { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const formatter = new Intl.DateTimeFormat('en-CA', options);
+    return formatter.format(new Date());
 }
 
 // ============================================

@@ -189,6 +189,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/logo.js"></script>
     <script>
         async function loadMemo() {
             const params = new URLSearchParams(window.location.search);
@@ -202,7 +203,7 @@
             try {
                 const memo = await DB.getMemoById(id);
 
-                const memoDate = new Date(memo.date).toLocaleDateString('th-TH');
+                const memoDate = new Date(memo.date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
                 const headApproved = memo.status !== 'pending_head' && memo.status !== 'pending';
                 const managerApproved = memo.status === 'processed';
 
@@ -212,6 +213,7 @@
 
                 document.getElementById('pageContent').innerHTML = `
                     <div class="header">
+                        ${typeof LOGO_BASE64 !== 'undefined' ? `<img src="${LOGO_BASE64}" alt="Company Logo" style="max-height: 80px; margin-bottom: 8px;">` : ''}
                         <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
                         <h3>บันทึกข้อความ</h3>
                     </div>

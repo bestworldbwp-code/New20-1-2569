@@ -39,7 +39,8 @@
         <nav class="navbar">
             <div class="navbar-content">
                 <div class="navbar-brand">
-                    <div style="font-size: 32px;">⚙️</div>
+                    <img id="navLogo" src="" alt="Logo" style="height: 32px; display: none; margin-right: 8px;">
+                    <div id="navEmoji" style="font-size: 32px;">⚙️</div>
                     <div>
                         <h1 style="font-size: 1.125rem; margin: 0;">Super Admin</h1>
                         <small class="text-muted">จัดการระบบและแผนก</small>
@@ -171,12 +172,21 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/db.js"></script>
+    <script src="js/logo.js"></script>
     <script src="js/ui.js"></script>
     <script>
         let isEditing = false;
 
         // Enter key for login
         document.addEventListener('DOMContentLoaded', function () {
+            if (typeof LOGO_BASE64 !== 'undefined') {
+                const navLogo = document.getElementById('navLogo');
+                const navEmoji = document.getElementById('navEmoji');
+                navLogo.src = LOGO_BASE64;
+                navLogo.style.display = 'block';
+                navEmoji.style.display = 'none';
+            }
+
             document.getElementById('passwordInput').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') doLogin();
             });
