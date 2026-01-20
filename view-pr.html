@@ -206,8 +206,15 @@
         }
 
         @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
             body {
                 background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
 
             .no-print {
@@ -221,11 +228,83 @@
             .page {
                 box-shadow: none;
                 margin: 0;
+                padding: 10mm 15mm 20mm 15mm;
+                width: 100%;
+                height: 277mm; /* A4 height minus margins */
+                min-height: auto;
+                max-height: 277mm;
+                overflow: hidden;
                 page-break-after: always;
+                page-break-inside: avoid;
+                position: relative;
             }
 
             .page:last-child {
                 page-break-after: auto;
+            }
+
+            /* ให้ตารางไม่ล้นหน้า */
+            table {
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            th, td {
+                padding: 6px 8px;
+                font-size: 12px;
+                word-wrap: break-word;
+                overflow: hidden;
+            }
+
+            /* Footer อยู่มุมล่างขวาตลอด */
+            .footer-text {
+                position: absolute;
+                bottom: 5mm;
+                right: 5mm;
+                font-size: 9px;
+                color: #666;
+            }
+
+            .header {
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+            }
+
+            .header h2 {
+                font-size: 16px;
+            }
+
+            .header h3 {
+                font-size: 14px;
+            }
+
+            .info-box {
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+
+            .info-row {
+                margin-bottom: 5px;
+                font-size: 12px;
+            }
+
+            .signature-area {
+                margin-top: 25px;
+                padding-top: 15px;
+            }
+
+            .sign-box {
+                width: 130px;
+            }
+
+            .sign-box .label {
+                margin-bottom: 30px;
+                font-size: 12px;
+            }
+
+            .remark-box {
+                padding: 10px;
+                margin-bottom: 15px;
             }
         }
     </style>
