@@ -230,7 +230,8 @@
                 margin: 0;
                 padding: 10mm 15mm 20mm 15mm;
                 width: 100%;
-                height: 277mm; /* A4 height minus margins */
+                height: 277mm;
+                /* A4 height minus margins */
                 min-height: auto;
                 max-height: 277mm;
                 overflow: hidden;
@@ -249,7 +250,8 @@
                 table-layout: fixed;
             }
 
-            th, td {
+            th,
+            td {
                 padding: 6px 8px;
                 font-size: 12px;
                 word-wrap: break-word;
@@ -326,7 +328,7 @@
     <script src="js/ui.js"></script>
     <script src="js/logo.js"></script>
     <script>
-        const ITEMS_PER_PAGE = 10;
+        const ITEMS_PER_PAGE = 15;
 
         async function loadPR() {
             const params = new URLSearchParams(window.location.search);
@@ -397,10 +399,7 @@
                     </tr>`;
             });
 
-            // Fill empty rows
-            for (let i = items.length; i < ITEMS_PER_PAGE; i++) {
-                itemsHtml += '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>';
-            }
+            // ไม่ต้อง fill empty rows - ให้ตารางกระชับตามจำนวนรายการจริง
 
             const footerHtml = isLastPage ? generateFooterHtml(pr) : '';
 
