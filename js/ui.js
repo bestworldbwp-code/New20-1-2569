@@ -157,21 +157,24 @@ function formatDate(isoString) {
     return d.toLocaleDateString('th-TH', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: 'Asia/Bangkok'
     });
 }
 
 function formatDateTime(isoString) {
     if (!isoString) return '-';
     const d = new Date(isoString);
-    return d.toLocaleDateString('th-TH', {
+    return d.toLocaleString('th-TH', {
         year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
         timeZone: 'Asia/Bangkok'
-    });
+    }).replace(',', '');
 }
 
 function getTodayDate() {

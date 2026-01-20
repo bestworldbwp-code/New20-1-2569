@@ -289,8 +289,8 @@
                 ? '<span class="mode-label mode-approved">รายการที่อนุมัติ</span>'
                 : '<span class="mode-label mode-original">ต้นฉบับ</span>';
 
-            const createdDate = new Date(pr.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
-            const requiredDate = new Date(pr.required_date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
+            const createdDate = UI.formatDate(pr.created_at);
+            const requiredDate = UI.formatDate(pr.required_date);
 
             let itemsHtml = '';
             items.forEach((item, idx) => {
@@ -366,8 +366,8 @@
             const headApproved = pr.status !== 'pending_head' && pr.status !== 'pending';
             const managerApproved = pr.status === 'processed';
 
-            const headApproveDate = pr.head_approved_at ? new Date(pr.head_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '';
-            const managerApproveDate = pr.manager_approved_at ? new Date(pr.manager_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '';
+            const headApproveDate = pr.head_approved_at ? UI.formatDateTime(pr.head_approved_at) : '';
+            const managerApproveDate = pr.manager_approved_at ? UI.formatDateTime(pr.manager_approved_at) : '';
 
             return `
                 <div class="remark-box">
@@ -379,7 +379,7 @@
                         <div class="label">ผู้ขอซื้อ</div>
                         <div class="name" style="color: #4361ee; font-weight: 600;">${pr.requester}</div>
                         <div class="line"></div>
-                        <small>วันที่ ${new Date(pr.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}</small>
+                        <small>วันที่ ${UI.formatDate(pr.created_at)}</small>
                     </div>
                     <div class="sign-box">
                         <div class="label">ผู้จัดการแผนก</div>

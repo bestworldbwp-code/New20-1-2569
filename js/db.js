@@ -425,9 +425,9 @@ async function exportPRToCSV() {
     csv += 'วันที่ขอ,เลขที่ PR,ผู้ขอซื้อ,แผนก,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
 
     data.forEach(row => {
-        const createdAt = new Date(row.created_at).toLocaleDateString('th-TH');
-        const headApproved = row.head_approved_at ? new Date(row.head_approved_at).toLocaleString('th-TH') : '-';
-        const managerApproved = row.manager_approved_at ? new Date(row.manager_approved_at).toLocaleString('th-TH') : '-';
+        const createdAt = new Date(row.created_at).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' });
+        const headApproved = row.head_approved_at ? new Date(row.head_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
+        const managerApproved = row.manager_approved_at ? new Date(row.manager_approved_at).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
 
         csv += `${createdAt},"${row.pr_number}","${row.requester}","${row.department}","${row.status}","${headApproved}","${managerApproved}"\n`;
     });
@@ -448,7 +448,7 @@ async function exportMemoToCSV() {
     csv += 'วันที่,เลขที่ Memo,จาก,ถึง,เรื่อง,สถานะ\n';
 
     data.forEach(row => {
-        const date = row.date ? new Date(row.date).toLocaleDateString('th-TH') : '-';
+        const date = row.date ? new Date(row.date).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' }) : '-';
         csv += `${date},"${row.memo_no}","${row.from_dept}","${row.to_dept || '-'}","${row.subject}","${row.status}"\n`;
     });
 
