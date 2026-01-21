@@ -474,6 +474,124 @@ async function exportMemoToCSV() {
     return csv;
 }
 
+// ============================================
+// EMAILJS ACCOUNTS (Multi-Account Support)
+// ============================================
+
+async function getEmailJSAccounts() {
+    const { data, error } = await db
+        .from('emailjs_accounts')
+        .select('*')
+        .order('created_at');
+
+    if (error) throw error;
+    return data || [];
+}
+
+async function getActiveEmailJSAccounts() {
+    const currentMonth = new Date().toISOString().slice(0, 7); // "2026-01"
+
+    const { data, error } = await db
+        .from('emailjs_accounts')
+        .select('*')
+        .eq('is_active', true)
+        .order('usage_count'); // เรียงตาม usage น้อยไปมาก
+
+    if (error) throw error;
+
+    // Reset counter ถ้าเดือนใหม่
+    const accounts = data || [];
+    for (const acc of accounts) {
+        if (acc.usage_month !== currentMonth) {
+            await resetAccountUsage(acc.id);
+            acc.usage_count = 0;
+            acc.usage_month = currentMonth;
+        }
+    }
+
+    return accounts;
+}
+
+async function addEmailJSAccount(accountData) {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    const { data, error } = await db
+        .from('emailjs_accounts')
+        .insert([{
+            ...accountData,
+            usage_count: 0,
+            usage_month: currentMonth
+        }])
+        .select();
+
+    if (error) throw error;
+    return data[0];
+}
+
+async function updateEmailJSAccount(id, updates) {
+    const { data, error } = await db
+        .from('emailjs_accounts')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+    if (error) throw error;
+    return data[0];
+}
+
+async function deleteEmailJSAccount(id) {
+    const { error } = await db
+        .from('emailjs_accounts')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+async function incrementEmailUsage(accountId) {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    // Get current account
+    const { data: account } = await db
+        .from('emailjs_accounts')
+        .select('*')
+        .eq('id', accountId)
+        .single();
+
+    if (!account) return;
+
+    // Reset if new month
+    if (account.usage_month !== currentMonth) {
+        await db
+            .from('emailjs_accounts')
+            .update({ usage_count: 1, usage_month: currentMonth })
+            .eq('id', accountId);
+    } else {
+        // Increment counter
+        await db
+            .from('emailjs_accounts')
+            .update({ usage_count: (account.usage_count || 0) + 1 })
+            .eq('id', accountId);
+    }
+}
+
+async function resetAccountUsage(accountId) {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    await db
+        .from('emailjs_accounts')
+        .update({ usage_count: 0, usage_month: currentMonth })
+        .eq('id', accountId);
+}
+
+async function resetAllAccountUsage() {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    await db
+        .from('emailjs_accounts')
+        .update({ usage_count: 0, usage_month: currentMonth });
+}
+
 // Make functions globally available
 window.DB = {
     getDepartments,
@@ -509,5 +627,15 @@ window.DB = {
     logAudit,
     getAuditLogs,
     exportPRToCSV,
-    exportMemoToCSV
+    exportMemoToCSV,
+    // EmailJS Accounts
+    getEmailJSAccounts,
+    getActiveEmailJSAccounts,
+    addEmailJSAccount,
+    updateEmailJSAccount,
+    deleteEmailJSAccount,
+    incrementEmailUsage,
+    resetAccountUsage,
+    resetAllAccountUsage
 };
+

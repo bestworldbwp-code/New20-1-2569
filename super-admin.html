@@ -131,6 +131,44 @@
                     </div>
                 </div>
             </div>
+
+            <!-- EmailJS Accounts Section -->
+            <div class="card mt-3">
+                <div class="card-header d-flex align-center justify-between">
+                    <h3 style="margin: 0;">📧 ตั้งค่า EmailJS (Multi-Account)</h3>
+                    <button class="btn btn-success btn-sm" onclick="showAddEmailJSModal()">
+                        ➕ เพิ่ม Account
+                    </button>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ชื่อ Account</th>
+                                    <th>Public Key</th>
+                                    <th>การใช้งานเดือนนี้</th>
+                                    <th>สถานะ</th>
+                                    <th style="text-align: center;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emailjsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center p-3">กำลังโหลด...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer"
+                    style="padding: 16px; background: var(--gray-50); border-top: 1px solid var(--gray-200);">
+                    <div class="d-flex align-center justify-between">
+                        <small class="text-muted">ระบบจะเลือกใช้ Account ที่มี quota เหลือมากที่สุดอัตโนมัติ</small>
+                        <button class="btn btn-outline btn-sm" onclick="resetAllEmailUsage()">🔄 Reset Counter
+                            ทั้งหมด</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -164,6 +202,56 @@
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="UI.hideModal('deptModal')">ยกเลิก</button>
                 <button class="btn btn-success" onclick="saveDepartment()">💾 บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit EmailJS Account Modal -->
+    <div class="modal-overlay" id="emailjsModal">
+        <div class="modal" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2 id="emailjsModalTitle">เพิ่ม EmailJS Account</h2>
+                <button class="modal-close" onclick="UI.hideModal('emailjsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="emailjsForm">
+                    <input type="hidden" id="emailjsId">
+
+                    <div class="form-group">
+                        <label class="form-label">ชื่อ Account *</label>
+                        <input type="text" id="emailjsName" class="form-control" required
+                            placeholder="เช่น Gmail หลัก, Gmail สำรอง">
+                        <small class="text-muted">ตั้งชื่อเพื่อให้จำง่ายว่าเป็น Account ไหน</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Public Key *</label>
+                        <input type="text" id="emailjsPublicKey" class="form-control" required
+                            placeholder="เช่น rEly1Il6Xz0qZwaSc">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Service ID *</label>
+                        <input type="text" id="emailjsServiceId" class="form-control" required
+                            placeholder="เช่น service_tolm3pu">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Template ID *</label>
+                        <input type="text" id="emailjsTemplateId" class="form-control" required
+                            placeholder="เช่น template_master">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Quota ต่อเดือน</label>
+                        <input type="number" id="emailjsQuota" class="form-control" value="200" min="1">
+                        <small class="text-muted">Free Plan = 200 email/เดือน</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="UI.hideModal('emailjsModal')">ยกเลิก</button>
+                <button class="btn btn-success" onclick="saveEmailJSAccount()">💾 บันทึก</button>
             </div>
         </div>
     </div>
@@ -228,6 +316,7 @@
             document.getElementById('mainContent').style.display = 'block';
             loadDepartments();
             loadSettings();
+            loadEmailJSAccounts();
         }
 
         function logout() {
@@ -386,6 +475,189 @@
                 UI.hideLoading();
                 UI.showToast('เปิดใช้งานแผนกเรียบร้อย', 'success');
                 loadDepartments();
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================
+        // EmailJS Accounts Management
+        // ============================================
+
+        let isEditingEmailJS = false;
+
+        async function loadEmailJSAccounts() {
+            const tbody = document.getElementById('emailjsTableBody');
+
+            try {
+                const accounts = await DB.getEmailJSAccounts();
+
+                if (accounts.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted p-3">
+                        ยังไม่มี EmailJS Account<br>
+                        <small>กดปุ่ม "➕ เพิ่ม Account" เพื่อเริ่มต้น</small>
+                    </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = accounts.map(acc => {
+                    const quota = acc.quota_limit || 200;
+                    const usage = acc.usage_count || 0;
+                    const percent = Math.round((usage / quota) * 100);
+                    const progressColor = percent >= 80 ? 'var(--danger)' : percent >= 50 ? 'var(--warning)' : 'var(--success)';
+
+                    return `
+                        <tr>
+                            <td>
+                                <strong>${acc.name}</strong>
+                            </td>
+                            <td><code style="font-size: 0.75rem;">${acc.public_key.substring(0, 10)}...</code></td>
+                            <td style="min-width: 180px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="flex: 1; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${percent}%; height: 100%; background: ${progressColor};"></div>
+                                    </div>
+                                    <small>${usage}/${quota}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <label class="switch" style="margin: 0;">
+                                    <input type="checkbox" ${acc.is_active ? 'checked' : ''} 
+                                        onchange="toggleEmailJSAccount('${acc.id}', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td style="text-align: center;">
+                                <button class="btn btn-outline btn-sm" onclick="editEmailJSAccount('${acc.id}')">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteEmailJSAccount('${acc.id}', '${acc.name}')">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-3">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+            }
+        }
+
+        function showAddEmailJSModal() {
+            isEditingEmailJS = false;
+            document.getElementById('emailjsModalTitle').textContent = 'เพิ่ม EmailJS Account';
+            document.getElementById('emailjsId').value = '';
+            document.getElementById('emailjsName').value = '';
+            document.getElementById('emailjsPublicKey').value = '';
+            document.getElementById('emailjsServiceId').value = '';
+            document.getElementById('emailjsTemplateId').value = '';
+            document.getElementById('emailjsQuota').value = '200';
+            UI.showModal('emailjsModal');
+        }
+
+        async function editEmailJSAccount(id) {
+            try {
+                const accounts = await DB.getEmailJSAccounts();
+                const acc = accounts.find(a => a.id === id);
+
+                if (!acc) {
+                    UI.showToast('ไม่พบ Account', 'error');
+                    return;
+                }
+
+                isEditingEmailJS = true;
+                document.getElementById('emailjsModalTitle').textContent = 'แก้ไข EmailJS Account';
+                document.getElementById('emailjsId').value = acc.id;
+                document.getElementById('emailjsName').value = acc.name;
+                document.getElementById('emailjsPublicKey').value = acc.public_key;
+                document.getElementById('emailjsServiceId').value = acc.service_id;
+                document.getElementById('emailjsTemplateId').value = acc.template_id;
+                document.getElementById('emailjsQuota').value = acc.quota_limit || 200;
+                UI.showModal('emailjsModal');
+            } catch (err) {
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        async function saveEmailJSAccount() {
+            const name = document.getElementById('emailjsName').value.trim();
+            const publicKey = document.getElementById('emailjsPublicKey').value.trim();
+            const serviceId = document.getElementById('emailjsServiceId').value.trim();
+            const templateId = document.getElementById('emailjsTemplateId').value.trim();
+            const quotaLimit = parseInt(document.getElementById('emailjsQuota').value) || 200;
+
+            if (!name || !publicKey || !serviceId || !templateId) {
+                UI.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                if (isEditingEmailJS) {
+                    const id = document.getElementById('emailjsId').value;
+                    await DB.updateEmailJSAccount(id, {
+                        name,
+                        public_key: publicKey,
+                        service_id: serviceId,
+                        template_id: templateId,
+                        quota_limit: quotaLimit
+                    });
+                } else {
+                    await DB.addEmailJSAccount({
+                        name,
+                        public_key: publicKey,
+                        service_id: serviceId,
+                        template_id: templateId,
+                        quota_limit: quotaLimit,
+                        is_active: true
+                    });
+                }
+
+                UI.hideLoading();
+                UI.hideModal('emailjsModal');
+                UI.showToast(isEditingEmailJS ? 'แก้ไข Account เรียบร้อย' : 'เพิ่ม Account เรียบร้อย', 'success');
+                loadEmailJSAccounts();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        async function toggleEmailJSAccount(id, isActive) {
+            try {
+                await DB.updateEmailJSAccount(id, { is_active: isActive });
+                UI.showToast(isActive ? 'เปิดใช้งาน Account แล้ว' : 'ปิดใช้งาน Account แล้ว', 'info');
+            } catch (err) {
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                loadEmailJSAccounts();
+            }
+        }
+
+        async function deleteEmailJSAccount(id, name) {
+            if (!confirm(`ต้องการลบ Account "${name}" หรือไม่?`)) return;
+
+            try {
+                UI.showLoading('กำลังลบ...');
+                await DB.deleteEmailJSAccount(id);
+                UI.hideLoading();
+                UI.showToast('ลบ Account เรียบร้อย', 'warning');
+                loadEmailJSAccounts();
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        async function resetAllEmailUsage() {
+            if (!confirm('ต้องการ Reset Counter ของทุก Account หรือไม่?')) return;
+
+            try {
+                UI.showLoading('กำลัง Reset...');
+                await DB.resetAllAccountUsage();
+                UI.hideLoading();
+                UI.showToast('Reset Counter เรียบร้อย', 'success');
+                loadEmailJSAccounts();
             } catch (err) {
                 UI.hideLoading();
                 UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');

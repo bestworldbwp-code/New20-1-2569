@@ -301,15 +301,67 @@ function getUserDept() {
 }
 
 // ============================================
-// EMAIL SENDING (EmailJS)
+// EMAIL SENDING (EmailJS Multi-Account)
 // ============================================
 
-let emailjsInitialized = false;
+let emailjsInitialized = {};
+let lastUsedAccountName = null;
 
+function initEmailJSAccount(publicKey) {
+    if (!emailjsInitialized[publicKey] && typeof emailjs !== 'undefined') {
+        emailjs.init(publicKey);
+        emailjsInitialized[publicKey] = true;
+    }
+}
+
+// Legacy init for backward compatibility
 function initEmailJS() {
-    if (!emailjsInitialized && typeof emailjs !== 'undefined') {
+    if (typeof emailjs !== 'undefined') {
         emailjs.init(CONFIG.emailjs.publicKey);
-        emailjsInitialized = true;
+    }
+}
+
+// เลือก Account ที่เหมาะสมที่สุด (ใช้น้อยสุด + ยังไม่เต็ม quota)
+async function selectBestEmailAccount() {
+    try {
+        const accounts = await DB.getActiveEmailJSAccounts();
+
+        if (accounts.length === 0) {
+            // ถ้าไม่มีใน DB ใช้ config เดิม
+            console.log('No EmailJS accounts in DB, using config default');
+            return {
+                id: null,
+                name: 'Default (Config)',
+                public_key: CONFIG.emailjs.publicKey,
+                service_id: CONFIG.emailjs.serviceId,
+                template_id: CONFIG.emailjs.templateId,
+                usage_count: 0,
+                quota_limit: 200
+            };
+        }
+
+        // เลือก account ที่ยังไม่เต็ม quota และใช้น้อยสุด
+        for (const account of accounts) {
+            const quota = account.quota_limit || 200;
+            if (account.usage_count < quota) {
+                return account;
+            }
+        }
+
+        // ถ้าเต็มทั้งหมด ใช้ตัวแรก (จะ error แต่อย่างน้อยพยายามส่ง)
+        console.warn('All EmailJS accounts are at quota limit!');
+        return accounts[0];
+
+    } catch (err) {
+        console.error('Error selecting EmailJS account:', err);
+        // Fallback to config
+        return {
+            id: null,
+            name: 'Default (Config)',
+            public_key: CONFIG.emailjs.publicKey,
+            service_id: CONFIG.emailjs.serviceId,
+            template_id: CONFIG.emailjs.templateId
+        };
     }
 }
 
@@ -319,19 +371,89 @@ async function sendEmail(toEmail, subject, htmlContent) {
         return false;
     }
 
-    initEmailJS();
-
     try {
-        await emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, {
+        // เลือก account ที่เหมาะสม
+        const account = await selectBestEmailAccount();
+        lastUsedAccountName = account.name;
+
+        console.log(`📧 Sending email via: ${account.name} (${account.usage_count || 0}/${account.quota_limit || 200})`);
+
+        // Init EmailJS with selected account's public key
+        initEmailJSAccount(account.public_key);
+
+        // Send email
+        await emailjs.send(account.service_id, account.template_id, {
             to_email: toEmail,
             subject: subject,
             html_content: htmlContent
         });
+
+        // Increment usage counter
+        if (account.id) {
+            await DB.incrementEmailUsage(account.id);
+        }
+
+        console.log(`✅ Email sent successfully via: ${account.name}`);
         return true;
+
     } catch (err) {
         console.error('Email failed:', err);
+
+        // ถ้า error ลอง fallback ไปใช้ account อื่น
+        const errorMessage = err.text || err.message || '';
+        if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+            console.log('Quota exceeded, trying next account...');
+            return await sendEmailFallback(toEmail, subject, htmlContent);
+        }
+
         return false;
     }
+}
+
+// Fallback: ลองส่งด้วย account อื่นถ้า account แรก error
+async function sendEmailFallback(toEmail, subject, htmlContent) {
+    try {
+        const accounts = await DB.getActiveEmailJSAccounts();
+
+        for (const account of accounts) {
+            // Skip account ที่เพิ่งใช้
+            if (account.name === lastUsedAccountName) continue;
+
+            try {
+                console.log(`🔄 Fallback: Trying ${account.name}...`);
+
+                initEmailJSAccount(account.public_key);
+
+                await emailjs.send(account.service_id, account.template_id, {
+                    to_email: toEmail,
+                    subject: subject,
+                    html_content: htmlContent
+                });
+
+                if (account.id) {
+                    await DB.incrementEmailUsage(account.id);
+                }
+
+                console.log(`✅ Fallback successful via: ${account.name}`);
+                return true;
+
+            } catch (e) {
+                console.warn(`❌ Fallback failed for ${account.name}:`, e);
+                continue;
+            }
+        }
+
+        return false;
+
+    } catch (err) {
+        console.error('Fallback failed:', err);
+        return false;
+    }
+}
+
+// Get last used account name (for display)
+function getLastUsedAccountName() {
+    return lastUsedAccountName;
 }
 
 async function notifyHeadForPR(department, prNumber, requester) {
