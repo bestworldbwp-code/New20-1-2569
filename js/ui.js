@@ -393,6 +393,32 @@ async function notifyPurchasingForApproval(prNumber, prId) {
     }
 }
 
+async function notifyHeadForApproval(department, prNumber, prId) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const linkApproved = window.location.origin + `/view-pr.html?id=${prId}&mode=approved`;
+            const linkOriginal = window.location.origin + `/view-pr.html?id=${prId}&mode=original`;
+
+            await sendEmail(
+                dept.head_email,
+                `[Approved] PR ${prNumber} อนุมัติเรียบร้อยแล้ว`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>PR เลขที่ <b>${prNumber}</b> ได้รับการอนุมัติจากผู้บริหารเรียบร้อยแล้ว ✅</p>
+                <hr>
+                <p>📂 <a href="${linkApproved}">ดูรายการที่อนุมัติ</a></p>
+                <p>📄 <a href="${linkOriginal}">ดูเอกสารต้นฉบับ</a></p>
+                <br>
+                <p style="color: #666;">ขอบคุณที่ใช้บริการระบบ PR System</p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify head for approval failed:', err);
+    }
+}
+
 // Make UI functions globally available
 window.UI = {
     showToast,
@@ -421,5 +447,6 @@ window.UI = {
     sendEmail,
     notifyHeadForPR,
     notifyManagerForPR,
-    notifyPurchasingForApproval
+    notifyPurchasingForApproval,
+    notifyHeadForApproval
 };

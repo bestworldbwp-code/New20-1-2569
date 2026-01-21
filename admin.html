@@ -573,6 +573,7 @@
                     } else {
                         await DB.approvePRByManager(currentDoc.id, updatedItems);
                         await UI.notifyPurchasingForApproval(currentDoc.pr_number, currentDoc.id);
+                        await UI.notifyHeadForApproval(currentDoc.department, currentDoc.pr_number, currentDoc.id);
                     }
                 } else {
                     if (currentUserRole === 'head') {
