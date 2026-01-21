@@ -626,8 +626,21 @@
 
         async function toggleEmailJSAccount(id, isActive) {
             try {
+                // ถ้าจะปิด ต้องเช็คว่ายังมี account อื่นเปิดอยู่ไหม
+                if (!isActive) {
+                    const accounts = await DB.getEmailJSAccounts();
+                    const activeAccounts = accounts.filter(a => a.is_active && a.id !== id);
+
+                    if (activeAccounts.length === 0) {
+                        UI.showToast('❌ ต้องเปิดใช้งานอย่างน้อย 1 Account', 'error');
+                        loadEmailJSAccounts(); // รีเฟรช UI กลับไปสถานะเดิม
+                        return;
+                    }
+                }
+
                 await DB.updateEmailJSAccount(id, { is_active: isActive });
-                UI.showToast(isActive ? 'เปิดใช้งาน Account แล้ว' : 'ปิดใช้งาน Account แล้ว', 'info');
+                UI.showToast(isActive ? '✅ เปิดใช้งาน Account แล้ว' : '⏸️ ปิดใช้งาน Account แล้ว', 'info');
+                loadEmailJSAccounts();
             } catch (err) {
                 UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
                 loadEmailJSAccounts();
