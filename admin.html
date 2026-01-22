@@ -467,11 +467,7 @@
                     <button class="btn btn-primary" onclick="window.open('view-pr.html?id=${currentDoc.id}&mode=original', '_blank')">🖨️ พิมพ์</button>`;
             } else {
                 footer.innerHTML = `
-                    <div style="flex: 1;">
-                        <input type="text" id="rejectReason" class="form-control" placeholder="เหตุผลที่ตีกลับทั้งใบ (ถ้ามี)">
-                    </div>
-                    <button class="btn btn-danger" onclick="rejectDocument()">❌ ตีกลับ</button>
-                    <button class="btn btn-success" onclick="approveDocument()">✅ อนุมัติ</button>`;
+                    <button class="btn btn-success" onclick="approveDocument()">✅ ตกลง</button>`;
             }
         }
 
@@ -509,11 +505,7 @@
                     <button class="btn btn-primary" onclick="window.open('view-memo.html?id=${currentDoc.id}', '_blank')">🖨️ พิมพ์</button>`;
             } else {
                 footer.innerHTML = `
-                    <div style="flex: 1;">
-                        <input type="text" id="rejectReason" class="form-control" placeholder="เหตุผลที่ตีกลับ (ถ้ามี)">
-                    </div>
-                    <button class="btn btn-danger" onclick="rejectDocument()">❌ ตีกลับ</button>
-                    <button class="btn btn-success" onclick="approveDocument()">✅ อนุมัติ</button>`;
+                    <button class="btn btn-success" onclick="approveDocument()">✅ ตกลง</button>`;
             }
         }
 
