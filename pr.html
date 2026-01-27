@@ -209,6 +209,11 @@
 
                 // Create PR
                 btn.innerHTML = '⏳ บันทึกข้อมูล...';
+
+                // Check Bypass (Using same setting as Memo)
+                const isBypass = await DB.checkMemoBypass(document.getElementById('department').value);
+                const initialStatus = isBypass ? 'pending_manager' : 'pending_head';
+
                 const prData = {
                     pr_number: document.getElementById('pr_number').value.trim(),
                     department: document.getElementById('department').value,
@@ -217,14 +222,18 @@
                     header_remark: document.getElementById('header_remark').value.trim(),
                     items: items,
                     attachment_url: attachmentUrl,
-                    status: 'pending_head'
+                    status: initialStatus
                 };
 
                 const newPR = await DB.createPR(prData);
 
-                // Send email notification to department head
+                // Send email notification
                 btn.innerHTML = '⏳ ส่งแจ้งเตือน...';
-                await UI.notifyHeadForPR(prData.department, prData.pr_number, prData.requester);
+                if (isBypass) {
+                    await UI.notifyManagerForPR(prData.pr_number, prData.department, prData.requester);
+                } else {
+                    await UI.notifyHeadForPR(prData.department, prData.pr_number, prData.requester);
+                }
 
                 // Show success
                 document.getElementById('formSection').style.display = 'none';

@@ -121,6 +121,11 @@
 
                 // Create Memo
                 btn.innerHTML = '⏳ บันทึกข้อมูล...';
+
+                // Check Bypass
+                const isBypass = await DB.checkMemoBypass(document.getElementById('from_dept').value);
+                const initialStatus = isBypass ? 'pending_manager' : 'pending_head';
+
                 const memoData = {
                     memo_no: document.getElementById('memo_no').value.trim(),
                     date: document.getElementById('memo_date').value,
@@ -129,14 +134,18 @@
                     subject: document.getElementById('subject').value.trim(),
                     content: document.getElementById('content').value.trim(),
                     attachment_url: attachmentUrl,
-                    status: 'pending_head'
+                    status: initialStatus
                 };
 
                 const newMemo = await DB.createMemo(memoData);
 
                 // Send email notification
                 btn.innerHTML = '⏳ ส่งแจ้งเตือน...';
-                await UI.notifyHeadForMemo(memoData.from_dept, memoData.memo_no, memoData.subject);
+                if (isBypass) {
+                    await UI.notifyManagerForMemo(memoData.memo_no, memoData.from_dept, memoData.subject);
+                } else {
+                    await UI.notifyHeadForMemo(memoData.from_dept, memoData.memo_no, memoData.subject);
+                }
 
                 UI.showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
 

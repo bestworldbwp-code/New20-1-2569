@@ -130,6 +130,22 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Memo Shortcut Settings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 style="margin: 0;">🚀 Free Pass (PR & Memo Shortcut)</h3>
+                        <small class="text-muted">เลือกแผนกที่จะส่ง PR/Memo ข้ามหัวหน้าแผนกไปหาผู้บริหารทันที</small>
+                    </div>
+                    <div class="card-body">
+                        <div id="bypassDeptList" class="row row-2" style="max-height: 200px; overflow-y: auto;">
+                            <p class="text-center text-muted">กำลังโหลด...</p>
+                        </div>
+                        <button class="btn btn-primary w-full mt-3" onclick="saveBypassSettings()">
+                            💾 บันทึกการตั้งค่า Shortcut
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- EmailJS Accounts Section -->
@@ -317,6 +333,7 @@
             loadDepartments();
             loadSettings();
             loadEmailJSAccounts();
+            loadBypassSettings();
         }
 
         function logout() {
@@ -671,6 +688,51 @@
                 UI.hideLoading();
                 UI.showToast('Reset Counter เรียบร้อย', 'success');
                 loadEmailJSAccounts();
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+            }
+        }
+
+        // ============================================
+        // Bypass Settings
+        // ============================================
+
+        async function loadBypassSettings() {
+            try {
+                const setting = await DB.getSetting('bypass_head_depts');
+                const bypassDepts = setting ? JSON.parse(setting) : [];
+                const departments = await DB.getAllDepartments();
+                const container = document.getElementById('bypassDeptList');
+
+                if (departments.length === 0) {
+                    container.innerHTML = '<p class="text-center text-muted">ไม่มีแผนกในระบบ</p>';
+                    return;
+                }
+
+                container.innerHTML = departments.map(dept => `
+                    <label class="d-flex align-center gap-2" style="cursor: pointer; padding: 5px; border-radius: 4px; hover: bg-gray-50;">
+                        <input type="checkbox" name="bypass_dept" value="${dept.name}" ${bypassDepts.includes(dept.name) ? 'checked' : ''}>
+                        <span>${dept.name}</span>
+                    </label>
+                `).join('');
+
+            } catch (err) {
+                console.error('Failed to load bypass settings:', err);
+                document.getElementById('bypassDeptList').innerHTML = '<p class="text-danger">โหลดข้อมูลไม่สำเร็จ</p>';
+            }
+        }
+
+        async function saveBypassSettings() {
+            try {
+                UI.showLoading('กำลังบันทึก...');
+                const checkboxes = document.querySelectorAll('input[name="bypass_dept"]:checked');
+                const selectedDepts = Array.from(checkboxes).map(cb => cb.value);
+
+                await DB.setSetting('bypass_head_depts', JSON.stringify(selectedDepts));
+
+                UI.hideLoading();
+                UI.showToast('บันทึก Shortcuts เรียบร้อย', 'success');
             } catch (err) {
                 UI.hideLoading();
                 UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');

@@ -608,6 +608,26 @@ async function notifyOwnerForMemoApproval(department, memoNo, memoId, subject) {
     }
 }
 
+async function notifyManagerForPR(prNumber, department, requester) {
+    try {
+        const managerEmail = await DB.getSetting('manager_email') || CONFIG.defaultEmails.manager;
+        const adminUrl = 'https://bwppr.vercel.app/admin.html';
+
+        await sendEmail(
+            managerEmail,
+            `[New PR] แผนก${department} ขออนุมัติ (Fast Track): ${prNumber}`,
+            `<h3>เรียน ผู้บริหารระดับสูง</h3>
+            <p>มีรายการขอซื้อ (Fast Track) จากแผนก <b>${department}</b></p>
+            <p>ผู้ขอซื้อ: ${requester}</p>
+            <p>เลขที่ PR: <b>${prNumber}</b></p>
+            <br>
+            <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบอนุมัติ</a></p>`
+        );
+    } catch (err) {
+        console.warn('Notify manager for PR failed:', err);
+    }
+}
+
 // Make UI functions globally available
 window.UI = {
     showToast,

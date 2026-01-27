@@ -604,6 +604,7 @@ window.DB = {
     setSetting,
     validateManagerPassword,
     validateSuperAdminPassword,
+    checkMemoBypass,
     createPR,
     getPRById,
     getPRsByStatus,
