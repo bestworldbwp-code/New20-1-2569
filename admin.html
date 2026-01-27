@@ -570,8 +570,10 @@
                 } else {
                     if (currentUserRole === 'head') {
                         await DB.approveMemoByHead(currentDoc.id, currentUserDept);
+                        await UI.notifyManagerForMemo(currentDoc.memo_no, currentUserDept, currentDoc.subject);
                     } else {
                         await DB.approveMemoByManager(currentDoc.id);
+                        await UI.notifyOwnerForMemoApproval(currentDoc.from_dept, currentDoc.memo_no, currentDoc.id, currentDoc.subject);
                     }
                 }
 

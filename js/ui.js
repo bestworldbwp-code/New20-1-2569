@@ -541,6 +541,73 @@ async function notifyHeadForApproval(department, prNumber, prId) {
     }
 }
 
+async function notifyHeadForMemo(department, memoNo, subject) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const adminUrl = 'https://bwppr.vercel.app/admin.html';
+            await sendEmail(
+                dept.head_email,
+                `[New Memo] แผนก${department} ขอตรวจสอบ Memo: ${memoNo}`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>มีบันทึกข้อความใหม่</p>
+                <p><b>เรื่อง:</b> ${subject}</p>
+                <p><b>เลขที่:</b> ${memoNo}</p>
+                <br>
+                <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบอนุมัติ</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify head for memo failed:', err);
+    }
+}
+
+async function notifyManagerForMemo(memoNo, department, subject) {
+    try {
+        const managerEmail = await DB.getSetting('manager_email') || CONFIG.defaultEmails.manager;
+        const link = window.location.origin + '/admin.html';
+
+        await sendEmail(
+            managerEmail,
+            `[อนุมัติขั้นที่ 1] Memo ${memoNo} ผ่านการตรวจสอบแล้ว`,
+            `<h3>เรียน ผู้บริหารระดับสูง</h3>
+            <p>Memo เลขที่ <b>${memoNo}</b> จากแผนก ${department}</p>
+            <p><b>เรื่อง:</b> ${subject}</p>
+            <p>ผ่านการตรวจสอบจากผู้จัดการแผนกแล้ว</p>
+            <br>
+            <p><a href="${link}">👉 คลิกเพื่อเข้าสู่ระบบอนุมัติ</a></p>`
+        );
+    } catch (err) {
+        console.warn('Notify manager for memo failed:', err);
+    }
+}
+
+async function notifyOwnerForMemoApproval(department, memoNo, memoId, subject) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const linkView = window.location.origin + `/view-memo.html?id=${memoId}`;
+
+            await sendEmail(
+                dept.head_email,
+                `[Approved] Memo ${memoNo} อนุมัติเรียบร้อยแล้ว`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>Memo เลขที่ <b>${memoNo}</b></p>
+                <p><b>เรื่อง:</b> ${subject}</p>
+                <p>ได้รับการอนุมัติจากผู้บริหารเรียบร้อยแล้ว ✅</p>
+                <hr>
+                <p>📄 <a href="${linkView}">ดูเอกสาร</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify owner for memo failed:', err);
+    }
+}
+
 // Make UI functions globally available
 window.UI = {
     showToast,
@@ -570,5 +637,8 @@ window.UI = {
     notifyHeadForPR,
     notifyManagerForPR,
     notifyPurchasingForApproval,
-    notifyHeadForApproval
+    notifyHeadForApproval,
+    notifyHeadForMemo,
+    notifyManagerForMemo,
+    notifyOwnerForMemoApproval
 };

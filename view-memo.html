@@ -195,17 +195,41 @@
         async function loadMemo() {
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
+            const isPreview = params.get('preview') === 'true';
 
-            if (!id) {
+            let memo;
+
+            // Handle Preview Mode
+            if (isPreview) {
+                const previewData = sessionStorage.getItem('memo_preview_data');
+                if (!previewData) {
+                    document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">ไม่พบข้อมูลตัวอย่าง</p>';
+                    return;
+                }
+                memo = JSON.parse(previewData);
+                document.title = '(Preview) ' + document.title;
+                const ribbon = document.createElement('div');
+                ribbon.className = 'no-print';
+                ribbon.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 5px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); pointer-events: none;';
+                ribbon.innerHTML = '⚠️ โหมดตัวอย่าง (Preview Mode)';
+                document.body.appendChild(ribbon);
+            } else if (!id) {
                 document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">ไม่พบข้อมูล</p>';
                 return;
+            } else {
+                // Load from DB
+                try {
+                    memo = await DB.getMemoById(id);
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">เกิดข้อผิดพลาด: ' + err.message + '</p>';
+                    return;
+                }
             }
 
             try {
-                const memo = await DB.getMemoById(id);
-
                 const memoDate = UI.formatDate(memo.date);
-                const headApproved = memo.status !== 'pending_head' && memo.status !== 'pending';
+                const headApproved = memo.status !== 'pending_head' && memo.status !== 'pending' && memo.status !== 'preview';
                 const managerApproved = memo.status === 'processed';
 
                 const attachmentHtml = memo.attachment_url

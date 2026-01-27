@@ -69,9 +69,14 @@
                         <input type="file" id="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-lg w-full mt-2" id="btnSubmit">
-                        🚀 ส่งบันทึกข้อความ
-                    </button>
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="button" class="btn btn-info btn-lg w-full" onclick="previewMemo()">
+                            👀 ดูตัวอย่าง (Preview)
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg w-full" id="btnSubmit">
+                            🚀 ส่งบันทึกข้อความ
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -131,7 +136,7 @@
 
                 // Send email notification
                 btn.innerHTML = '⏳ ส่งแจ้งเตือน...';
-                await UI.notifyHeadForPR(memoData.from_dept, memoData.memo_no, 'บันทึกข้อความ');
+                await UI.notifyHeadForMemo(memoData.from_dept, memoData.memo_no, memoData.subject);
 
                 UI.showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
 
@@ -147,6 +152,33 @@
                 btn.innerHTML = originalText;
             }
         });
+
+        // Preview Function
+        async function previewMemo() {
+            // Get form values
+            const memoData = {
+                memo_no: document.getElementById('memo_no').value.trim() || '-',
+                date: document.getElementById('memo_date').value || '-',
+                from_dept: document.getElementById('from_dept').value || '-',
+                to_dept: document.getElementById('to_dept').value.trim() || '-',
+                subject: document.getElementById('subject').value.trim() || '-',
+                content: document.getElementById('content').value.trim() || '-',
+                status: 'preview' // Flag for preview
+            };
+
+            // Handle file for preview (create blob URL)
+            const fileInput = document.getElementById('attachment');
+            if (fileInput.files.length > 0) {
+                memoData.attachment_url = URL.createObjectURL(fileInput.files[0]);
+                memoData.attachment_name = fileInput.files[0].name;
+            }
+
+            // Save to session
+            sessionStorage.setItem('memo_preview_data', JSON.stringify(memoData));
+
+            // Open window
+            window.open('view-memo.html?preview=true', '_blank');
+        }
     </script>
 </body>
 
