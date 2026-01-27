@@ -106,6 +106,23 @@ async function validateSuperAdminPassword(password) {
 }
 
 // ============================================
+// MEMO BYPASS LOGIC
+// ============================================
+
+async function checkMemoBypass(department) {
+    const setting = await getSetting('bypass_head_depts');
+    if (!setting) return false;
+
+    try {
+        const bypassDepts = JSON.parse(setting);
+        return Array.isArray(bypassDepts) && bypassDepts.includes(department);
+    } catch (e) {
+        console.warn('Invalid bypass setting:', e);
+        return false;
+    }
+}
+
+// ============================================
 // PURCHASE REQUESTS
 // ============================================
 
