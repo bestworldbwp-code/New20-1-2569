@@ -609,6 +609,191 @@ async function resetAllAccountUsage() {
         .update({ usage_count: 0, usage_month: currentMonth });
 }
 
+// ============================================
+// PETTY CASH REQUESTS
+// ============================================
+
+async function generatePettyCashNumber() {
+    const now = new Date();
+    const th = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const yearMonth = `${th.getUTCFullYear()}${String(th.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    // Count existing requests this month
+    const { count } = await db
+        .from('petty_cash_requests')
+        .select('id', { count: 'exact', head: true })
+        .like('request_no', `PC-${yearMonth}-%`);
+
+    const seq = String((count || 0) + 1).padStart(3, '0');
+    return `PC-${yearMonth}-${seq}`;
+}
+
+async function createPettyCash(data) {
+    const requestNo = await generatePettyCashNumber();
+
+    const { data: result, error } = await db
+        .from('petty_cash_requests')
+        .insert([{
+            ...data,
+            request_no: requestNo
+        }])
+        .select();
+
+    if (error) throw error;
+
+    // Log audit
+    await logAudit('CREATE_PETTY_CASH', 'petty_cash', result[0].id, requestNo, { requester: data.requester });
+
+    return result[0];
+}
+
+async function getPettyCashById(id) {
+    console.log('[DB] Getting Petty Cash ID:', id); // Debug
+    const { data, error } = await db
+        .from('petty_cash_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('[DB] Error getting petty cash:', error);
+        throw error;
+    }
+    console.log('[DB] Found data:', data);
+    return data;
+}
+
+async function getPettyCashByStatus(status, department = null) {
+    let query = db
+        .from('petty_cash_requests')
+        .select('*')
+        .eq('status', status)
+        .order('created_at', { ascending: false });
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+async function getPettyCashHistory(department = null) {
+    let query = db
+        .from('petty_cash_requests')
+        .select('*')
+        .in('status', ['approved', 'rejected', 'cancelled'])
+        .order('created_at', { ascending: false });
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+async function updatePettyCash(id, updates, action = 'UPDATE_PETTY_CASH') {
+    const { data, error } = await db
+        .from('petty_cash_requests')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+    if (error) throw error;
+
+    // Log audit
+    await logAudit(action, 'petty_cash', id, data[0].request_no, updates);
+
+    return data[0];
+}
+
+async function approvePettyCashByHead(id, approverDept) {
+    const updates = {
+        status: 'pending_manager',
+        head_approved_at: new Date().toISOString(),
+        head_approved_by: approverDept
+    };
+
+    return await updatePettyCash(id, updates, 'APPROVE_PETTY_CASH_HEAD');
+}
+
+async function approvePettyCashByManager(id) {
+    const updates = {
+        status: 'approved',
+        manager_approved_at: new Date().toISOString(),
+        manager_approved_by: 'ผู้บริหาร'
+    };
+
+    return await updatePettyCash(id, updates, 'APPROVE_PETTY_CASH_MANAGER');
+}
+
+async function rejectPettyCash(id, reason, role) {
+    const updates = {
+        status: 'rejected',
+        cancel_reason: `ตีกลับโดย ${role}: ${reason}`
+    };
+
+    return await updatePettyCash(id, updates, 'REJECT_PETTY_CASH');
+}
+
+async function cancelPettyCash(id, reason) {
+    const updates = {
+        status: 'cancelled',
+        cancel_reason: reason
+    };
+
+    return await updatePettyCash(id, updates, 'CANCEL_PETTY_CASH');
+}
+
+async function countPendingPettyCash(status, department = null) {
+    let query = db
+        .from('petty_cash_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', status);
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { count } = await query;
+    return count || 0;
+}
+
+async function exportPettyCashToCSV() {
+    const { data, error } = await db
+        .from('petty_cash_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!data.length) return null;
+
+    let csv = '\uFEFF'; // BOM for Thai
+    csv += 'วันที่ขอ,เลขที่,ผู้ขอเบิก,แผนก,จำนวนเงิน,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
+
+    data.forEach(row => {
+        const formatD = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+        };
+        const formatDT = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
+        };
+
+        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_amount}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}"\n`;
+    });
+
+    return csv;
+}
+
 // Make functions globally available
 window.DB = {
     getDepartments,
@@ -654,6 +839,18 @@ window.DB = {
     deleteEmailJSAccount,
     incrementEmailUsage,
     resetAccountUsage,
-    resetAllAccountUsage
+    resetAllAccountUsage,
+    // Petty Cash
+    createPettyCash,
+    getPettyCashById,
+    getPettyCashByStatus,
+    getPettyCashHistory,
+    updatePettyCash,
+    approvePettyCashByHead,
+    approvePettyCashByManager,
+    rejectPettyCash,
+    cancelPettyCash,
+    countPendingPettyCash,
+    exportPettyCashToCSV
 };
 

@@ -434,8 +434,8 @@
             const id = params.get('id');
             const mode = params.get('mode') || 'original';
 
-            if (!id) {
-                document.getElementById('pagesContainer').innerHTML = '<p style="color: white; text-align: center; padding: 40px;">ไม่พบข้อมูล</p>';
+            if (!id || id === 'undefined') {
+                document.getElementById('pagesContainer').innerHTML = '<p style="color: white; text-align: center; padding: 40px;">ไม่พบ ID เอกสาร</p>';
                 return;
             }
 

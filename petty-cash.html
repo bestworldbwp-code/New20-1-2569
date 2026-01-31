@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เบิกเงินสดย่อย | บริษัท เบสท์เวิลด์ อินเตอร์พลาส</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container" style="padding-top: 40px; padding-bottom: 40px;">
+        <!-- Header -->
+        <div class="text-center mb-3">
+            <a href="index.html" class="btn btn-outline btn-sm" style="margin-bottom: 20px;">← กลับหน้าหลัก</a>
+            <h1 style="color: white; font-size: 1.75rem; margin-bottom: 8px;">💰 เบิกเงินสดย่อย</h1>
+            <p style="color: rgba(255,255,255,0.8);">สร้างใบเบิกเงินสดย่อย - Petty Cash</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 style="font-size: 1.25rem;">📝 รายละเอียดการเบิก</h2>
+            </div>
+            <div class="card-body">
+                <form id="pettyCashForm">
+                    <!-- Department & Requester -->
+                    <div class="row row-2 mb-2">
+                        <div class="form-group">
+                            <label class="form-label">ฝ่าย/แผนก <span class="text-danger">*</span></label>
+                            <select id="department" class="form-control form-select" required>
+                                <option value="" disabled selected>-- กรุณาเลือก --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ผู้ขอเบิก <span class="text-danger">*</span></label>
+                            <input type="text" id="requester" class="form-control" placeholder="ชื่อ-นามสกุล" required>
+                        </div>
+                    </div>
+
+                    <div class="row row-2 mb-2">
+                        <div class="form-group">
+                            <label class="form-label">วัน เดือน ปี <span class="text-danger">*</span></label>
+                            <input type="date" id="requestDate" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <!-- Empty for spacing -->
+                        </div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <div class="form-group">
+                        <label class="form-label">รายการขอเบิก</label>
+                        <div id="itemsContainer">
+                            <!-- Items will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm mt-2" onclick="addItem()">
+                            ➕ เพิ่มรายการ
+                        </button>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="row row-2 mb-2" style="margin-top: 24px;">
+                        <div class="form-group">
+                            <label class="form-label">จำนวนเงินรวม (บาท)</label>
+                            <input type="text" id="totalAmount" class="form-control" readonly
+                                style="font-size: 1.25rem; font-weight: 700; background: var(--gray-100);">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">จำนวนเงิน (ตัวอักษร)</label>
+                            <input type="text" id="amountText" class="form-control"
+                                placeholder="เช่น หนึ่งพันห้าร้อยบาทถ้วน">
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="text-center mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            📤 ส่งขออนุมัติ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-3" style="color: rgba(255,255,255,0.6); font-size: 0.875rem;">
+            <p>© 2026 PR System v2.0 | Petty Cash Module</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script>
+        let itemCount = 0;
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Set today's date
+            document.getElementById('requestDate').value = UI.getTodayDate();
+
+            // Load departments
+            await UI.populateDepartmentSelect('department');
+
+            // Add first item row
+            addItem();
+        });
+
+        function addItem() {
+            itemCount++;
+            const container = document.getElementById('itemsContainer');
+
+            const itemHtml = `
+                <div class="item-row" id="item-${itemCount}">
+                    <div class="row" style="grid-template-columns: 60px 1fr 150px 40px; gap: 12px; align-items: center;">
+                        <div>
+                            <input type="text" class="form-control text-center" value="${itemCount}" readonly 
+                                style="background: var(--gray-200); font-weight: 600;">
+                        </div>
+                        <div>
+                            <input type="text" class="form-control item-detail" placeholder="รายละเอียด" required>
+                        </div>
+                        <div>
+                            <input type="number" class="form-control item-amount text-right" placeholder="0.00" 
+                                step="0.01" min="0" oninput="calculateTotal()" required>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(${itemCount})" 
+                                style="padding: 8px 12px;">✕</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', itemHtml);
+        }
+
+        function removeItem(id) {
+            const item = document.getElementById(`item-${id}`);
+            if (item && document.querySelectorAll('.item-row').length > 1) {
+                item.remove();
+                calculateTotal();
+                renumberItems();
+            } else {
+                UI.showToast('ต้องมีอย่างน้อย 1 รายการ', 'warning');
+            }
+        }
+
+        function renumberItems() {
+            const items = document.querySelectorAll('.item-row');
+            items.forEach((item, index) => {
+                const numInput = item.querySelector('input[readonly]');
+                if (numInput) numInput.value = index + 1;
+            });
+        }
+
+        function calculateTotal() {
+            const amounts = document.querySelectorAll('.item-amount');
+            let total = 0;
+
+            amounts.forEach(input => {
+                const val = parseFloat(input.value) || 0;
+                total += val;
+            });
+
+            document.getElementById('totalAmount').value = total.toLocaleString('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function getItems() {
+            const items = [];
+            const rows = document.querySelectorAll('.item-row');
+
+            rows.forEach((row, index) => {
+                const detail = row.querySelector('.item-detail').value.trim();
+                const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+
+                if (detail && amount > 0) {
+                    items.push({
+                        no: index + 1,
+                        detail: detail,
+                        amount: amount
+                    });
+                }
+            });
+
+            return items;
+        }
+
+        document.getElementById('pettyCashForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const department = document.getElementById('department').value;
+            const requester = document.getElementById('requester').value.trim();
+            const requestDate = document.getElementById('requestDate').value;
+            const items = getItems();
+            const amountText = document.getElementById('amountText').value.trim();
+
+            // Validation
+            if (!department) {
+                UI.showToast('กรุณาเลือกแผนก', 'error');
+                return;
+            }
+
+            if (!requester) {
+                UI.showToast('กรุณาระบุชื่อผู้ขอเบิก', 'error');
+                return;
+            }
+
+            if (items.length === 0) {
+                UI.showToast('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
+
+            const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+
+                const data = {
+                    department,
+                    requester,
+                    request_date: requestDate,
+                    items,
+                    total_amount: totalAmount,
+                    amount_text: amountText || null
+                };
+
+                const result = await DB.createPettyCash(data);
+
+                console.log('Create Result:', result); // Debug log
+
+                if (!result || !result.id) {
+                    throw new Error('บันทึกข้อมูลสำเร็จแต่ไม่ได้รับ ID กลับมา (Database Result is empty)');
+                }
+
+                // Send email notification to head
+                await UI.notifyHeadForPettyCash(department, result.request_no, requester, totalAmount);
+
+                // Save ID to localStorage as fallback
+                localStorage.setItem('petty_cash_debug_id', result.id);
+                console.log('Saved ID to LocalStorage:', result.id);
+
+                UI.hideLoading();
+
+                UI.showToast('สร้างใบเบิกสำเร็จ! กรุณารอการตรวจสอบ', 'success');
+                window.location.assign(`view-petty-cash.html?id=${result.id}`);
+
+            } catch (err) {
+                UI.hideLoading();
+                console.error('Error creating petty cash:', err);
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                alert('Debug Error: ' + err.message + '\n\nดูรายละเอียดใน Console (F12)');
+            }
+        });
+    </script>
+</body>
+
+</html>

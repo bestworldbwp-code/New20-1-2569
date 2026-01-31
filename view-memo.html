@@ -213,8 +213,8 @@
                 ribbon.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 5px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); pointer-events: none;';
                 ribbon.innerHTML = '⚠️ โหมดตัวอย่าง (Preview Mode)';
                 document.body.appendChild(ribbon);
-            } else if (!id) {
-                document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">ไม่พบข้อมูล</p>';
+            } else if (!id || id === 'undefined') {
+                document.getElementById('pageContent').innerHTML = '<p style="text-align: center; padding: 100px;">ไม่พบ ID เอกสาร</p>';
                 return;
             } else {
                 // Load from DB
