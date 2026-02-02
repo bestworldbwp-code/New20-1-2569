@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Departments</title>
+</head>
+
+<body>
+    <pre id="output">Loading...</pre>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script>
+        const db = supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+        async function run() {
+            const { data, error } = await db.from('departments').select('*');
+            if (error) {
+                document.getElementById('output').textContent = JSON.stringify(error, null, 2);
+            } else {
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+            }
+        }
+        run();
+    </script>
+</body>
+
+</html>

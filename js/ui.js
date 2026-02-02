@@ -165,7 +165,15 @@ function formatDate(isoString) {
     const d = thDate.getUTCDate();
     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     const m = months[thDate.getUTCMonth()];
-    const y = thDate.getUTCFullYear() + 543;
+    let y = thDate.getUTCFullYear();
+    // Check if year is already in BE format (> 2100 means it's already BE)
+    if (y > 2100) {
+        // Year is already in BE, don't add 543
+        // Do nothing, use y as is
+    } else {
+        // Year is in AD, convert to BE
+        y = y + 543;
+    }
     return `${d} ${m} ${y}`;
 }
 
@@ -182,7 +190,15 @@ function formatDateTime(isoString) {
     const thDate = new Date(date.getTime() + (7 * 60 * 60 * 1000));
     const d = String(thDate.getUTCDate()).padStart(2, '0');
     const m = String(thDate.getUTCMonth() + 1).padStart(2, '0');
-    const y = thDate.getUTCFullYear() + 543;
+    let y = thDate.getUTCFullYear();
+    // Check if year is already in BE format (> 2100 means it's already BE)
+    if (y > 2100) {
+        // Year is already in BE, don't add 543
+        // Do nothing, use y as is
+    } else {
+        // Year is in AD, convert to BE
+        y = y + 543;
+    }
     const hh = String(thDate.getUTCHours()).padStart(2, '0');
     const mm = String(thDate.getUTCMinutes()).padStart(2, '0');
     const ss = String(thDate.getUTCSeconds()).padStart(2, '0');
