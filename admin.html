@@ -57,7 +57,7 @@
 
         <div class="container" style="padding: 24px 20px;">
             <!-- Stats Cards -->
-            <div class="row row-4 mb-3" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="row row-4 mb-3" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="card" style="cursor: pointer;" onclick="switchDocType('pr')">
                     <div class="card-body d-flex align-center gap-2" style="padding: 20px;">
                         <div
@@ -77,6 +77,17 @@
                         <div>
                             <p class="text-muted" style="font-size: 0.875rem; margin: 0;">บันทึกข้อความ</p>
                             <h3 id="countMemo" style="margin: 0;">-</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="cursor: pointer;" onclick="switchDocType('petty_cash')">
+                    <div class="card-body d-flex align-center gap-2" style="padding: 20px;">
+                        <div
+                            style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--warning), #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">
+                            💰</div>
+                        <div>
+                            <p class="text-muted" style="font-size: 0.875rem; margin: 0;">เบิกเงินสดย่อย</p>
+                            <h3 id="countPettyCash" style="margin: 0;">-</h3>
                         </div>
                     </div>
                 </div>
@@ -275,14 +286,18 @@
                     const status = currentUserRole === 'head' ? 'pending_head' : 'pending_manager';
                     if (currentDocType === 'pr') {
                         allDocs = await DB.getPRsByStatus(status, dept);
-                    } else {
+                    } else if (currentDocType === 'memo') {
                         allDocs = await DB.getMemosByStatus(status, dept);
+                    } else if (currentDocType === 'petty_cash') {
+                        allDocs = await DB.getPettyCashByStatus(status, dept);
                     }
                 } else {
                     if (currentDocType === 'pr') {
                         allDocs = await DB.getPRHistory(dept);
-                    } else {
+                    } else if (currentDocType === 'memo') {
                         allDocs = await DB.getMemoHistory(dept);
+                    } else if (currentDocType === 'petty_cash') {
+                        allDocs = await DB.getPettyCashHistory(dept);
                     }
                 }
 
@@ -300,9 +315,11 @@
 
             const prCount = await DB.countPendingPR(status, dept);
             const memoCount = await DB.countPendingMemo(status, dept);
+            const pettyCashCount = await DB.countPendingPettyCash(status, dept);
 
             document.getElementById('countPR').textContent = prCount;
             document.getElementById('countMemo').textContent = memoCount;
+            document.getElementById('countPettyCash').textContent = pettyCashCount;
         }
 
         function renderTable() {
@@ -317,11 +334,18 @@
 
             allDocs.forEach(doc => {
                 const row = document.createElement('tr');
-                const docNo = currentDocType === 'pr' ? doc.pr_number : doc.memo_no;
+                let docNo, detail;
+                if (currentDocType === 'pr') {
+                    docNo = doc.pr_number;
+                    detail = `${doc.requester} (${doc.department})`;
+                } else if (currentDocType === 'memo') {
+                    docNo = doc.memo_no;
+                    detail = `${doc.from_dept} → ${doc.subject}`;
+                } else if (currentDocType === 'petty_cash') {
+                    docNo = doc.request_no;
+                    detail = `${doc.requester} (${doc.department}) - ${Number(doc.total_amount).toLocaleString()} บาท`;
+                }
                 const date = UI.formatDate(doc.created_at);
-                const detail = currentDocType === 'pr'
-                    ? `${doc.requester} (${doc.department})`
-                    : `${doc.from_dept} → ${doc.subject}`;
 
                 row.innerHTML = `
                     <td><strong class="text-primary">${docNo}</strong></td>
@@ -340,7 +364,12 @@
 
         function switchDocType(type) {
             currentDocType = type;
-            document.getElementById('docTypeLabel').textContent = type === 'pr' ? '📦 ใบขอซื้อ (PR)' : '📝 บันทึกข้อความ';
+            const labels = {
+                'pr': '📦 ใบขอซื้อ (PR)',
+                'memo': '📝 บันทึกข้อความ',
+                'petty_cash': '💰 เบิกเงินสดย่อย'
+            };
+            document.getElementById('docTypeLabel').textContent = labels[type] || type;
             loadData();
         }
 
@@ -366,8 +395,10 @@
 
             if (currentDocType === 'pr') {
                 renderPRDetail(modalBody, modalFooter);
-            } else {
+            } else if (currentDocType === 'memo') {
                 renderMemoDetail(modalBody, modalFooter);
+            } else if (currentDocType === 'petty_cash') {
+                renderPettyCashDetail(modalBody, modalFooter);
             }
 
             UI.showModal('detailModal');
@@ -506,6 +537,115 @@
             } else {
                 footer.innerHTML = `
                     <button class="btn btn-success" onclick="approveDocument()">✅ ตกลง</button>`;
+            }
+        }
+
+        function renderPettyCashDetail(body, footer) {
+            const isHistory = currentTab === 'history';
+            const items = currentDoc.items || [];
+
+            let itemsHtml = '';
+            items.forEach((item, idx) => {
+                itemsHtml += `
+                    <tr>
+                        <td class="text-center">${item.no || idx + 1}</td>
+                        <td>${item.detail}</td>
+                        <td class="text-right">${Number(item.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                    </tr>`;
+            });
+
+            if (items.length === 0) {
+                itemsHtml = '<tr><td colspan="3" class="text-center text-muted p-3">ไม่มีรายการ</td></tr>';
+            }
+
+            body.innerHTML = `
+                <div class="paper-preview">
+                    <div class="text-center mb-2">
+                        <h3>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h3>
+                        <h4 class="text-warning">ใบเบิกเงินสดย่อย (Petty Cash)</h4>
+                    </div>
+                    
+                    <div class="row row-2 mb-2">
+                        <p><strong>เลขที่:</strong> ${currentDoc.request_no}</p>
+                        <p><strong>วันที่:</strong> ${UI.formatDate(currentDoc.request_date)}</p>
+                        <p><strong>ผู้ขอเบิก:</strong> ${currentDoc.requester}</p>
+                        <p><strong>แผนก:</strong> ${currentDoc.department}</p>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">ลำดับ</th>
+                                    <th>รายละเอียด</th>
+                                    <th style="width: 120px; text-align: right;">จำนวนเงิน</th>
+                                </tr>
+                            </thead>
+                            <tbody>${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-2 text-right">
+                        <p><strong>รวมทั้งสิ้น:</strong> <span style="font-size: 1.25rem; color: var(--primary);">${Number(currentDoc.total_amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท</span></p>
+                        ${currentDoc.amount_text ? `<p><strong>จำนวนเงิน (ตัวอักษร):</strong> ${currentDoc.amount_text}</p>` : ''}
+                    </div>
+                </div>`;
+
+            if (isHistory) {
+                footer.innerHTML = `
+                    <button class="btn btn-outline" onclick="UI.hideModal('detailModal')">ปิด</button>
+                    <button class="btn btn-primary" onclick="window.open('view-petty-cash.html?id=${currentDoc.id}', '_blank')">🖨️ พิมพ์</button>`;
+            } else {
+                footer.innerHTML = `
+                    <button class="btn btn-danger" onclick="rejectPettyCash()">❌ ตีกลับ</button>
+                    <button class="btn btn-success" onclick="approvePettyCash()">✅ อนุมัติ</button>`;
+            }
+        }
+
+        async function approvePettyCash() {
+            try {
+                UI.showLoading('กำลังอนุมัติ...');
+
+                if (currentUserRole === 'head') {
+                    await DB.approvePettyCashByHead(currentDoc.id, currentUserDept);
+                    await UI.notifyManagerForPettyCash(currentDoc.request_no, currentDoc.department, currentDoc.total_amount);
+                } else {
+                    await DB.approvePettyCashByManager(currentDoc.id);
+                    await UI.notifyRequesterForPettyCashApproval(currentDoc.department, currentDoc.request_no, currentDoc.id, currentDoc.total_amount);
+                    await UI.notifyAccountingForPettyCashApproval(currentDoc.request_no, currentDoc.department, currentDoc.total_amount, currentDoc.id);
+                }
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('อนุมัติเบิกเงินสดย่อยเรียบร้อย!', 'success');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        async function rejectPettyCash() {
+            const reason = prompt('กรุณาระบุเหตุผลที่ตีกลับ:');
+            if (!reason || !reason.trim()) {
+                UI.showToast('กรุณาระบุเหตุผล', 'warning');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+                const roleName = currentUserRole === 'head' ? 'ผู้จัดการแผนก' : 'ผู้บริหาร';
+                await DB.rejectPettyCash(currentDoc.id, reason.trim(), roleName);
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('ตีกลับเอกสารเรียบร้อย', 'warning');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
             }
         }
 
@@ -653,9 +793,12 @@
                 if (currentDocType === 'pr') {
                     csv = await DB.exportPRToCSV();
                     filename = `PR_Log_${Date.now()}.csv`;
-                } else {
+                } else if (currentDocType === 'memo') {
                     csv = await DB.exportMemoToCSV();
                     filename = `Memo_Log_${Date.now()}.csv`;
+                } else if (currentDocType === 'petty_cash') {
+                    csv = await DB.exportPettyCashToCSV();
+                    filename = `PettyCash_Log_${Date.now()}.csv`;
                 }
 
                 if (!csv) {

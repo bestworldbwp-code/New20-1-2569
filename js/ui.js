@@ -462,7 +462,7 @@ async function notifyHeadForPR(department, prNumber, requester) {
         const dept = departments.find(d => d.name === department);
 
         if (dept && dept.head_email) {
-            const adminUrl = 'https://bwppr.vercel.app/admin.html';
+            const adminUrl = window.location.origin + '/admin.html';
             await sendEmail(
                 dept.head_email,
                 `[New PR] แผนก${department} ขอตรวจสอบ PR: ${prNumber}`,
@@ -547,7 +547,7 @@ async function notifyHeadForMemo(department, memoNo, subject) {
         const dept = departments.find(d => d.name === department);
 
         if (dept && dept.head_email) {
-            const adminUrl = 'https://bwppr.vercel.app/admin.html';
+            const adminUrl = window.location.origin + '/admin.html';
             await sendEmail(
                 dept.head_email,
                 `[New Memo] แผนก${department} ขอตรวจสอบ Memo: ${memoNo}`,
@@ -611,7 +611,7 @@ async function notifyOwnerForMemoApproval(department, memoNo, memoId, subject) {
 async function notifyManagerForPR(prNumber, department, requester) {
     try {
         const managerEmail = await DB.getSetting('manager_email') || CONFIG.defaultEmails.manager;
-        const adminUrl = 'https://bwppr.vercel.app/admin.html';
+        const adminUrl = window.location.origin + '/admin.html';
 
         await sendEmail(
             managerEmail,
@@ -625,6 +625,103 @@ async function notifyManagerForPR(prNumber, department, requester) {
         );
     } catch (err) {
         console.warn('Notify manager for PR failed:', err);
+    }
+}
+
+// ============================================
+// PETTY CASH EMAIL NOTIFICATIONS
+// ============================================
+
+async function notifyHeadForPettyCash(department, requestNo, requester, amount) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const adminUrl = window.location.origin + '/admin.html';
+            await sendEmail(
+                dept.head_email,
+                `[เบิกเงินสดย่อย] แผนก${department} ขอเบิกเงิน: ${requestNo}`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>มีรายการขอเบิกเงินสดย่อยใหม่</p>
+                <p><b>เลขที่:</b> ${requestNo}</p>
+                <p><b>ผู้ขอเบิก:</b> ${requester}</p>
+                <p><b>จำนวนเงิน:</b> ${Number(amount).toLocaleString()} บาท</p>
+                <br>
+                <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบตรวจสอบ</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify head for petty cash failed:', err);
+    }
+}
+
+async function notifyManagerForPettyCash(requestNo, department, amount) {
+    try {
+        const managerEmail = await DB.getSetting('manager_email') || CONFIG.defaultEmails.manager;
+        const adminUrl = window.location.origin + '/admin.html';
+
+        await sendEmail(
+            managerEmail,
+            `[เบิกเงินสดย่อย] ${requestNo} รอการอนุมัติ`,
+            `<h3>เรียน ผู้บริหารระดับสูง</h3>
+            <p>รายการเบิกเงินสดย่อย <b>${requestNo}</b> จากแผนก ${department}</p>
+            <p>ผ่านการตรวจสอบจากผู้จัดการแผนกแล้ว</p>
+            <p><b>จำนวนเงิน:</b> ${Number(amount).toLocaleString()} บาท</p>
+            <br>
+            <p><a href="${adminUrl}">👉 คลิกเพื่อเข้าสู่ระบบอนุมัติ</a></p>`
+        );
+    } catch (err) {
+        console.warn('Notify manager for petty cash failed:', err);
+    }
+}
+
+async function notifyRequesterForPettyCashApproval(department, requestNo, requestId, amount) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const viewUrl = window.location.origin + `/view-petty-cash.html?id=${requestId}`;
+
+            await sendEmail(
+                dept.head_email,
+                `[อนุมัติแล้ว] เบิกเงินสดย่อย ${requestNo}`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>รายการเบิกเงินสดย่อย <b>${requestNo}</b></p>
+                <p><b>จำนวนเงิน:</b> ${Number(amount).toLocaleString()} บาท</p>
+                <p>ได้รับการอนุมัติจากผู้บริหารเรียบร้อยแล้ว ✅</p>
+                <hr>
+                <p>📄 <a href="${viewUrl}">คลิกเพื่อดูเอกสารและพิมพ์ไปเบิกเงินที่ฝ่ายบัญชี</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify requester for petty cash approval failed:', err);
+    }
+}
+
+async function notifyAccountingForPettyCashApproval(requestNo, department, amount, requestId) {
+    try {
+        const accountingEmail = await DB.getSetting('accounting_email');
+        if (!accountingEmail) {
+            console.warn('No accounting email configured');
+            return;
+        }
+
+        const viewUrl = window.location.origin + `/view-petty-cash.html?id=${requestId}`;
+
+        await sendEmail(
+            accountingEmail,
+            `[อนุมัติแล้ว] เบิกเงินสดย่อย ${requestNo} (${department})`,
+            `<h3>เรียน ฝ่ายบัญชี</h3>
+            <p>รายการเบิกเงินสดย่อย <b>${requestNo}</b> ของแผนก ${department}</p>
+            <p><b>จำนวนเงิน:</b> ${Number(amount).toLocaleString()} บาท</p>
+            <p>ได้รับการอนุมัติเรียบร้อยแล้ว เตรียมจ่ายเงินได้</p>
+            <hr>
+            <p>📄 <a href="${viewUrl}">คลิกเพื่อดูเอกสาร</a></p>`
+        );
+    } catch (err) {
+        console.warn('Notify accounting failed:', err);
     }
 }
 
@@ -660,5 +757,10 @@ window.UI = {
     notifyHeadForApproval,
     notifyHeadForMemo,
     notifyManagerForMemo,
-    notifyOwnerForMemoApproval
+    notifyOwnerForMemoApproval,
+    // Petty Cash
+    notifyHeadForPettyCash,
+    notifyManagerForPettyCash,
+    notifyRequesterForPettyCashApproval,
+    notifyAccountingForPettyCashApproval
 };

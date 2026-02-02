@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเบิกเงินสดย่อย | บริษัท เบสท์เวิลด์ อินเตอร์พลาส</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Print Styles */
+        .paper {
+            background: white;
+            padding: 40px;
+            max-width: 210mm;
+            margin: 20px auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .paper-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .paper-header img {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+
+        .paper-header h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .paper-header p {
+            font-size: 12px;
+            color: #666;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .paper-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 20px 0;
+            text-decoration: underline;
+        }
+
+        .paper-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 20px 0;
+            text-decoration: underline;
+        }
+
+        .paper-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .paper-info .left,
+        .paper-info .right {
+            font-size: 0.95rem;
+        }
+
+        .paper-info .label {
+            font-weight: 600;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #333;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .items-table .col-no {
+            width: 60px;
+            text-align: center;
+        }
+
+        .items-table .col-amount {
+            width: 120px;
+            text-align: right;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-top: 2px solid #333;
+            margin-top: 10px;
+        }
+
+        .total-row .amount-text {
+            font-size: 0.95rem;
+        }
+
+        .total-row .amount-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .signature-box {
+            border: 1px solid #ccc;
+            padding: 20px 10px 15px;
+            min-height: 100px;
+        }
+
+        .signature-box .title {
+            font-weight: 600;
+            margin-bottom: 40px;
+        }
+
+        .signature-box .line {
+            border-top: 1px solid #333;
+            margin: 0 10px;
+            padding-top: 8px;
+        }
+
+        .signature-box .name {
+            font-size: 0.875rem;
+            min-height: 20px;
+        }
+
+        .signature-box .date {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .status-banner {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .status-banner.pending_head {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-banner.pending_manager {
+            background: #cffafe;
+            color: #0891b2;
+        }
+
+        .status-banner.approved {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-banner.rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .paper {
+                box-shadow: none;
+                margin: 0;
+                padding: 20px;
+            }
+
+            .status-banner {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Actions Bar -->
+    <div class="no-print"
+        style="background: white; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;">
+        <div
+            style="max-width: 210mm; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" class="btn btn-outline btn-sm">← กลับหน้าหลัก</a>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="window.print()" class="btn btn-primary">🖨️ พิมพ์</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paper Preview -->
+    <div class="paper" id="paperContent">
+        <!-- Status Banner -->
+        <div class="status-banner no-print" id="statusBanner">
+            กำลังโหลด...
+        </div>
+
+        <!-- Header -->
+        <div class="paper-header" id="headerContainer">
+            <!-- Content filled by JS -->
+            <div class="company-name">บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</div>
+            <div class="company-address">328 ม.6 ต.คลองนิยมยาตรา อ.บางบ่อ จ.สมุทรปราการ 10560 โทร: 02-3175670-3</div>
+            <div class="tax-id">เลขประจำตัวผู้เสียภาษี 0115450001637</div>
+        </div>
+
+        <!-- Title -->
+        <div class="paper-title">ใบเบิกเงินสดย่อย</div>
+
+        <!-- Info -->
+        <div class="paper-info">
+            <div class="left">
+                <div><span class="label">ฝ่าย/แผนก:</span> <span id="department">-</span></div>
+            </div>
+            <div class="right">
+                <div><span class="label">เลขที่:</span> <span id="requestNo">-</span></div>
+                <div><span class="label">วันที่:</span> <span id="requestDate">-</span></div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="col-no">ลำดับ</th>
+                    <th>รายละเอียด</th>
+                    <th class="col-amount">จำนวนเงิน</th>
+                </tr>
+            </thead>
+            <tbody id="itemsBody">
+                <!-- Items will be rendered here -->
+            </tbody>
+        </table>
+
+        <!-- Total -->
+        <div class="total-row">
+            <div class="amount-text">
+                <span class="label">จำนวนเงิน (ตัวอักษร):</span> <span id="amountText">-</span>
+            </div>
+            <div class="amount-number">
+                รวม: <span id="totalAmount">0.00</span> บาท
+            </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="signature-box">
+                <div class="title">ผู้จ่าย</div>
+                <div class="line">
+                    <div class="name" id="paidBy">........................</div>
+                    <div class="date" id="paidDate">วันที่ ....../....../......</div>
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="title">ผู้ตรวจสอบ</div>
+                <div class="line">
+                    <div class="name" id="headApprovedBy">........................</div>
+                    <div class="date" id="headApprovedDate">วันที่ ....../....../......</div>
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="title">ผู้อนุมัติ</div>
+                <div class="line">
+                    <div class="name" id="managerApprovedBy">........................</div>
+                    <div class="date" id="managerApprovedDate">วันที่ ....../....../......</div>
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="title">ผู้รับเงิน</div>
+                <div class="line">
+                    <div class="name" id="requesterName">........................</div>
+                    <div class="date">วันที่ ....../....../......</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/logo.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Get ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let id = urlParams.get('id');
+            console.log('[DEBUG] Document ID from URL:', id);
+
+            // Handle "undefined" string
+            if (id === 'undefined') {
+                console.warn('[DEBUG] ID is "undefined" string, treating as null');
+                id = null;
+            }
+
+            // Fallback: If URL has no ID, check LocalStorage
+            if (!id) {
+                console.log('[DEBUG] ID not in URL, checking LocalStorage...');
+                const storedId = localStorage.getItem('petty_cash_debug_id');
+                if (storedId) {
+                    console.info('[DEBUG] Recovered ID from LocalStorage:', storedId);
+                    id = storedId;
+                    // Optional: update URL to match
+                    try {
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('id', id);
+                        window.history.replaceState({}, '', newUrl);
+                    } catch (e) {
+                        console.warn('Could not update URL state:', e);
+                    }
+                }
+            }
+
+            // Show Debug ID & URL
+            const debugIdEl = document.getElementById('debugId');
+            const debugUrlEl = document.getElementById('debugUrl');
+
+            if (debugIdEl) debugIdEl.textContent = id || 'NULL';
+            if (debugUrlEl) debugUrlEl.textContent = window.location.href;
+
+            if (!id) {
+                const statusBanner = document.getElementById('statusBanner');
+                if (statusBanner) {
+                    statusBanner.textContent = '⚠️ ไม่พบ ID เอกสาร (URL Parameter Missing)';
+                    statusBanner.className = 'status-banner no-print rejected';
+                }
+                UI.showToast('ไม่พบ ID เอกสาร', 'error');
+
+                // Show debug info for user
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'no-print';
+                debugDiv.style.padding = '20px';
+                debugDiv.style.marginTop = '20px';
+                debugDiv.style.background = '#fdeef4';
+                debugDiv.style.border = '1px solid #f8d7da';
+                debugDiv.innerHTML = `
+                    <div style="color: #721c24; font-weight: bold; margin-bottom: 10px;">🔍 ข้อมูลสำหรับแก้ไข (Debug Info):</div>
+                    <ul style="color: #721c24; font-size: 0.9rem;">
+                        <li><b>URL ปัจจุบัน:</b> ${window.location.href}</li>
+                        <li><b>ID ที่แกะได้:</b> ${id || 'NULL'}</li>
+                        <li><b>คำแนะนำ:</b> ลองกลับไปที่หน้าหลักแล้วกดเข้ามาใหม่ หรือเช็คจากหน้า Admin ครับ</li>
+                    </ul>
+                `;
+                document.body.appendChild(debugDiv);
+                return;
+            }
+
+            try {
+                // Check if DB is loaded
+                if (typeof DB === 'undefined' || !DB.getPettyCashById) {
+                    throw new Error('Database Module (js/db.js) failed to load. Please check if Supabase is blocked or Config is wrong.');
+                }
+
+                // Load petty cash data with timeout protection
+                console.log('[DEBUG] Fetching data for ID:', id);
+
+                const fetchPromise = DB.getPettyCashById(id);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('การเรียกข้อมูลใช้เวลานานเกินไป (Request Timeout)')), 8000)
+                );
+
+                const pc = await Promise.race([fetchPromise, timeoutPromise]);
+                console.log('[DEBUG] Received data:', pc);
+
+                if (!pc) {
+                    UI.showToast('ไม่พบเอกสาร', 'error');
+                    return;
+                }
+
+                // Render data
+                document.getElementById('requestNo').textContent = pc.request_no;
+                document.getElementById('department').textContent = pc.department;
+                document.getElementById('requestDate').textContent = UI.formatDate(pc.request_date);
+                document.getElementById('requesterName').textContent = pc.requester;
+                document.getElementById('totalAmount').textContent = Number(pc.total_amount).toLocaleString('th-TH', {
+                    minimumFractionDigits: 2
+                });
+                document.getElementById('amountText').textContent = pc.amount_text || '-';
+
+                // Render items
+                const items = pc.items || [];
+                const tbody = document.getElementById('itemsBody');
+                tbody.innerHTML = '';
+
+                items.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="col-no">${item.no || index + 1}</td>
+                        <td>${item.detail}</td>
+                        <td class="col-amount">${Number(item.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Add empty rows if less than 5 items
+                for (let i = items.length; i < 5; i++) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="col-no">&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td class="col-amount">&nbsp;</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+
+                // Status banner
+                const statusBanner = document.getElementById('statusBanner');
+                const statusMap = {
+                    'pending_head': 'รอผู้จัดการแผนกตรวจสอบ',
+                    'pending_manager': 'รอผู้บริหารอนุมัติ',
+                    'approved': '✅ อนุมัติแล้ว - พร้อมปริ้นไปเบิกเงิน',
+                    'rejected': '❌ ไม่อนุมัติ',
+                    'cancelled': 'ยกเลิก'
+                };
+                statusBanner.textContent = statusMap[pc.status] || pc.status;
+                statusBanner.className = `status-banner no-print ${pc.status}`;
+
+                // Head approval
+                if (pc.head_approved_by) {
+                    document.getElementById('headApprovedBy').textContent = pc.head_approved_by;
+                    document.getElementById('headApprovedDate').textContent =
+                        'วันที่ ' + UI.formatDate(pc.head_approved_at);
+                }
+
+                // Manager approval
+                if (pc.manager_approved_by) {
+                    document.getElementById('managerApprovedBy').textContent = pc.manager_approved_by;
+                    document.getElementById('managerApprovedDate').textContent =
+                        'วันที่ ' + UI.formatDate(pc.manager_approved_at);
+                }
+
+                // Load header content
+                const headerContainer = document.getElementById('headerContainer');
+                let logoHtml = '';
+                if (typeof LOGO_BASE64 !== 'undefined') {
+                    logoHtml = `<img src="${LOGO_BASE64}" alt="Company Logo">`;
+                }
+
+                headerContainer.innerHTML = `
+                    ${logoHtml}
+                    <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
+                    <p>328 ม.6 ต.คลองนิยมยาตรา อ.บางบ่อ จ.สมุทรปราการ 10560 โทร: 02-3175670-3</p>
+                    <p>เลขประจำตัวผู้เสียภาษี 0115450001637</p>
+                `;
+
+            } catch (err) {
+                console.error('Error loading petty cash:', err);
+                const statusBanner = document.getElementById('statusBanner');
+                if (statusBanner) {
+                    statusBanner.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                    statusBanner.className = 'status-banner no-print rejected';
+                }
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+
+                // Debug info
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'no-print';
+                debugDiv.style.padding = '20px';
+                debugDiv.style.marginTop = '20px';
+                debugDiv.style.background = '#000';
+                debugDiv.style.color = '#fff';
+                debugDiv.innerHTML = `<pre>Debug Info:\nID: ${id}\nError: ${err.message}\nStack: ${err.stack}</pre>`;
+                document.body.appendChild(debugDiv);
+            }
+        });
+    </script>
+</body>
+
+</html>

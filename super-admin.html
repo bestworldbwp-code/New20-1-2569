@@ -116,6 +116,12 @@
                                     placeholder="purchasing@email.com">
                             </div>
 
+                            <div class="form-group">
+                                <label class="form-label">อีเมลฝ่ายบัญชี (สำหรับแจ้งเตือนเบิกเงินสดย่อย)</label>
+                                <input type="email" id="accountingEmail" class="form-control"
+                                    placeholder="accounting@email.com">
+                            </div>
+
                             <button type="submit" class="btn btn-primary w-full">
                                 💾 บันทึกการตั้งค่า
                             </button>
@@ -388,11 +394,13 @@
                 const managerPassword = await DB.getSetting('manager_password');
                 const managerEmail = await DB.getSetting('manager_email');
                 const purchasingEmail = await DB.getSetting('purchasing_email');
+                const accountingEmail = await DB.getSetting('accounting_email');
 
                 document.getElementById('superAdminPassword').value = superPassword || '';
                 document.getElementById('managerPassword').value = managerPassword || '';
                 document.getElementById('managerEmail').value = managerEmail || '';
                 document.getElementById('purchasingEmail').value = purchasingEmail || '';
+                document.getElementById('accountingEmail').value = accountingEmail || '';
             } catch (err) {
                 console.error(err);
             }
@@ -409,6 +417,7 @@
                 await DB.setSetting('manager_password', document.getElementById('managerPassword').value.trim());
                 await DB.setSetting('manager_email', document.getElementById('managerEmail').value.trim());
                 await DB.setSetting('purchasing_email', document.getElementById('purchasingEmail').value.trim());
+                await DB.setSetting('accounting_email', document.getElementById('accountingEmail').value.trim());
 
                 UI.hideLoading();
                 UI.showToast('บันทึกการตั้งค่าเรียบร้อย', 'success');

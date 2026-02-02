@@ -115,6 +115,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .menu-card .icon.primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
 .menu-card .icon.success { background: linear-gradient(135deg, var(--success), #059669); }
+.menu-card .icon.warning { background: linear-gradient(135deg, var(--warning), #d97706); }
 .menu-card .icon.dark { background: linear-gradient(135deg, var(--dark), #334155); }
 .menu-card .icon.danger { background: linear-gradient(135deg, var(--danger), #dc2626); }
 
