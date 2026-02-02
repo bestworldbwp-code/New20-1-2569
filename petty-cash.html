@@ -243,6 +243,7 @@
 
                 // Send email notification to head
                 await UI.notifyHeadForPettyCash(department, result.request_no, requester, totalAmount);
+                // console.log('📧 Email notification disabled for Petty Cash (Local Mode)');
 
                 // Save ID to localStorage as fallback
                 localStorage.setItem('petty_cash_debug_id', result.id);
@@ -264,4 +265,3 @@
 </body>
 
 </html>
-
