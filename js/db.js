@@ -183,7 +183,7 @@ async function getPRHistory(department = null) {
     let query = db
         .from('purchase_requests')
         .select('*')
-        .in('status', ['processed', 'rejected', 'cancelled'])
+        .in('status', ['pending_manager', 'processed', 'rejected', 'cancelled'])
         .order('created_at', { ascending: false });
 
     if (department) {
@@ -325,7 +325,7 @@ async function getMemoHistory(department = null) {
     let query = db
         .from('memos')
         .select('*')
-        .in('status', ['processed', 'rejected', 'cancelled'])
+        .in('status', ['pending_manager', 'processed', 'rejected', 'cancelled'])
         .order('created_at', { ascending: false });
 
     if (department) {
@@ -706,7 +706,7 @@ async function getPettyCashHistory(department = null) {
     let query = db
         .from('petty_cash_requests')
         .select('*')
-        .in('status', ['approved', 'rejected', 'cancelled'])
+        .in('status', ['pending_manager', 'approved', 'rejected', 'cancelled'])
         .order('created_at', { ascending: false });
 
     if (department) {
