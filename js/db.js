@@ -151,6 +151,18 @@ async function getPRById(id) {
     return data;
 }
 
+async function getPRByNumber(prNumber) {
+    const { data, error } = await db
+        .from('purchase_requests')
+        .select('*')
+        .eq('pr_number', prNumber.trim())
+        .single();
+
+    // Allow not found error
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+}
+
 async function getPRsByStatus(status, department = null) {
     let query = db
         .from('purchase_requests')
@@ -279,6 +291,18 @@ async function getMemoById(id) {
         .single();
 
     if (error) throw error;
+    return data;
+}
+
+async function getMemoByNumber(memoNumber) {
+    const { data, error } = await db
+        .from('memos')
+        .select('*')
+        .eq('memo_no', memoNumber.trim())
+        .single();
+
+    // Allow not found error
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
 }
 
@@ -632,6 +656,7 @@ window.DB = {
     rejectPR,
     cancelPR,
     countPendingPR,
+    getPRByNumber, // Added
     createMemo,
     getMemoById,
     getMemosByStatus,
@@ -641,6 +666,7 @@ window.DB = {
     approveMemoByManager,
     rejectMemo,
     countPendingMemo,
+    getMemoByNumber, // Added
     uploadFile,
     logAudit,
     getAuditLogs,
