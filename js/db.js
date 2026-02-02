@@ -151,15 +151,15 @@ async function getPRById(id) {
     return data;
 }
 
+
 async function getPRByNumber(prNumber) {
     const { data, error } = await db
         .from('purchase_requests')
         .select('*')
         .eq('pr_number', prNumber.trim())
-        .single();
+        .maybeSingle();
 
-    // Allow not found error
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data;
 }
 
@@ -299,10 +299,9 @@ async function getMemoByNumber(memoNumber) {
         .from('memos')
         .select('*')
         .eq('memo_no', memoNumber.trim())
-        .single();
+        .maybeSingle();
 
-    // Allow not found error
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error) throw error;
     return data;
 }
 
