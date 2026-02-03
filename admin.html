@@ -408,10 +408,11 @@
             const isHistory = currentTab === 'history';
             const showQtyEdit = currentUserRole === 'head' && !isHistory;
 
-            // Filter items for manager - only show approved items
+            // Filter items for manager
             let displayItems = currentDoc.items;
             if (currentUserRole === 'manager' && !isHistory) {
-                displayItems = currentDoc.items.filter(i => i.status === 'approved');
+                // Show 'approved' OR 'pending' (for bypass cases)
+                displayItems = currentDoc.items.filter(i => i.status === 'approved' || i.status === 'pending');
             }
 
             let itemsHtml = '';
