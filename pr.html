@@ -227,6 +227,11 @@
                 const isBypass = await DB.checkMemoBypass(document.getElementById('department').value);
                 const initialStatus = isBypass ? 'pending_manager' : 'pending_head';
 
+                // If Bypass, auto-approve items so manager can see them
+                if (isBypass) {
+                    items.forEach(item => item.status = 'approved');
+                }
+
                 // Check duplicate PR number
                 const prNumberInput = document.getElementById('pr_number').value.trim();
                 if (prNumberInput) {
