@@ -125,7 +125,7 @@
             }
 
             // ป้องกันการกด Enter ส่งฟอร์ม
-            document.getElementById('prForm').addEventListener('keydown', function(e) {
+            document.getElementById('prForm').addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                     e.preventDefault();
                     return false;
@@ -260,7 +260,7 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
-        });
+        }
     </script>
 </body>
 
