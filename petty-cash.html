@@ -24,7 +24,7 @@
                 <h2 style="font-size: 1.25rem;">📝 รายละเอียดการเบิก</h2>
             </div>
             <div class="card-body">
-                <form id="pettyCashForm">
+                <form id="pettyCashForm" onsubmit="return false;">
                     <!-- Department & Requester -->
                     <div class="row row-2 mb-2">
                         <div class="form-group">
@@ -76,7 +76,7 @@
 
                     <!-- Submit -->
                     <div class="text-center mt-3">
-                        <button type="submit" class="btn btn-primary btn-lg">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="submitPettyCash()">
                             📤 ส่งขออนุมัติ
                         </button>
                     </div>
@@ -109,6 +109,14 @@
 
             // Add first item row
             addItem();
+
+            // ป้องกันการกด Enter ส่งฟอร์ม
+            document.getElementById('pettyCashForm').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
         });
 
         function addItem() {
@@ -194,8 +202,8 @@
             return items;
         }
 
-        document.getElementById('pettyCashForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        async function submitPettyCash() {
+            // e.preventDefault(); // Not needed as we use type="button"
 
             const department = document.getElementById('department').value;
             const requester = document.getElementById('requester').value.trim();

@@ -26,7 +26,7 @@
                     <h3 class="text-success">บันทึกข้อความ (Memo)</h3>
                 </div>
 
-                <form id="memoForm">
+                <form id="memoForm" onsubmit="return false;">
                     <div class="row row-2">
                         <div class="form-group">
                             <label class="form-label">จากหน่วยงาน (From) *</label>
@@ -73,7 +73,8 @@
                         <button type="button" class="btn btn-info btn-lg w-full" onclick="previewMemo()">
                             👀 ดูตัวอย่าง (Preview)
                         </button>
-                        <button type="submit" class="btn btn-success btn-lg w-full" id="btnSubmit">
+                        <button type="button" class="btn btn-success btn-lg w-full" id="btnSubmit"
+                            onclick="submitMemo()">
                             🚀 ส่งบันทึกข้อความ
                         </button>
                     </div>
@@ -98,11 +99,19 @@
             if (typeof LOGO_BASE64 !== 'undefined') {
                 document.getElementById('companyLogo').src = LOGO_BASE64;
             }
+
+            // ป้องกันการกด Enter ส่งฟอร์ม
+            document.getElementById('memoForm').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
         });
 
         // Form submit
-        document.getElementById('memoForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        async function submitMemo() {
+            // e.preventDefault();
 
             const btn = document.getElementById('btnSubmit');
             const originalText = btn.innerHTML;
@@ -192,4 +201,3 @@
 </body>
 
 </html>
-

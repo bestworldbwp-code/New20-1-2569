@@ -27,7 +27,7 @@
                     <h3 class="text-primary">ใบขอซื้อ (Purchase Request)</h3>
                 </div>
 
-                <form id="prForm">
+                <form id="prForm" onsubmit="return false;">
                     <!-- Basic Info -->
                     <div class="row row-2">
                         <div class="form-group">
@@ -78,7 +78,8 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary btn-lg w-full mt-2" id="btnSubmit">
+                    <button type="button" class="btn btn-primary btn-lg w-full mt-2" id="btnSubmit"
+                        onclick="submitPR()">
                         🚀 ส่งคำขออนุมัติ
                     </button>
                 </form>
@@ -122,6 +123,14 @@
             if (typeof LOGO_BASE64 !== 'undefined') {
                 document.getElementById('companyLogo').src = LOGO_BASE64;
             }
+
+            // ป้องกันการกด Enter ส่งฟอร์ม
+            document.getElementById('prForm').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
         });
 
         // Add item row
@@ -166,8 +175,8 @@
         }
 
         // Form submit
-        document.getElementById('prForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
+        async function submitPR() {
+            // e.preventDefault(); // Using type="button" now
 
             const btn = document.getElementById('btnSubmit');
             const originalText = btn.innerHTML;
@@ -256,4 +265,3 @@
 </body>
 
 </html>
-
