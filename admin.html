@@ -701,11 +701,25 @@
 
                     if (currentUserRole === 'head') {
                         await DB.approvePRByHead(currentDoc.id, updatedItems, currentUserDept);
-                        await UI.notifyManagerForPR(currentDoc.pr_number, currentDoc.department);
+
+                        // เช็คว่ามีรายการที่อนุมัติหรือไม่ ก่อนส่ง email
+                        const approvedItems = updatedItems.filter(i => i.status === 'approved');
+                        if (approvedItems.length > 0) {
+                            await UI.notifyManagerForPR(currentDoc.pr_number, currentDoc.department);
+                        }
                     } else {
+                        // ผู้บริหาร
                         await DB.approvePRByManager(currentDoc.id, updatedItems);
-                        await UI.notifyPurchasingForApproval(currentDoc.pr_number, currentDoc.id);
-                        await UI.notifyHeadForApproval(currentDoc.department, currentDoc.pr_number, currentDoc.id);
+
+                        const approvedItems = updatedItems.filter(i => i.status === 'approved');
+                        if (approvedItems.length > 0) {
+                            // มีรายการอนุมัติ → แจ้งแผนกจัดซื้อ
+                            await UI.notifyPurchasingForApproval(currentDoc.pr_number, currentDoc.id);
+                            await UI.notifyHeadForApproval(currentDoc.department, currentDoc.pr_number, currentDoc.id);
+                        } else {
+                            // reject ทั้งหมด → ส่งกลับหัวหน้า
+                            await UI.notifyHeadForPRReturn(currentDoc.pr_number, currentDoc.department);
+                        }
                     }
                 } else {
                     if (currentUserRole === 'head') {

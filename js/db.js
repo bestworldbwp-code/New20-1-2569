@@ -211,8 +211,14 @@ async function updatePR(id, updates, action = 'UPDATE_PR') {
 }
 
 async function approvePRByHead(id, items, approverDept) {
+    // เช็คว่ามีรายการที่อนุมัติหรือไม่
+    const approvedItems = items.filter(item => item.status === 'approved');
+
+    // ถ้าไม่มีรายการที่อนุมัติเลย = reject ทั้งหมด → จบ
+    const finalStatus = approvedItems.length > 0 ? 'pending_manager' : 'rejected';
+
     const updates = {
-        status: 'pending_manager',
+        status: finalStatus,
         items: items,
         head_approved_at: new Date().toISOString(),
         head_approved_by: approverDept
@@ -222,8 +228,14 @@ async function approvePRByHead(id, items, approverDept) {
 }
 
 async function approvePRByManager(id, items) {
+    // เช็คว่ามีรายการที่ผู้บริหารอนุมัติหรือไม่
+    const approvedItems = items.filter(item => item.status === 'approved');
+
+    // ถ้าไม่มีรายการที่อนุมัติเลย = ส่งกลับหัวหน้า
+    const finalStatus = approvedItems.length > 0 ? 'processed' : 'pending_head';
+
     const updates = {
-        status: 'processed',
+        status: finalStatus,
         items: items,
         manager_approved_at: new Date().toISOString(),
         manager_approved_by: 'ผู้บริหาร'

@@ -644,6 +644,29 @@ async function notifyManagerForPR(prNumber, department, requester) {
     }
 }
 
+async function notifyHeadForPRReturn(prNumber, department) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const adminUrl = window.location.origin + '/admin.html';
+            await sendEmail(
+                dept.head_email,
+                `🔄 PR ${prNumber} ถูกส่งกลับจากผู้บริหาร`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>PR เลขที่ <b>${prNumber}</b> ถูกผู้บริหารส่งกลับ</p>
+                <p><b>เหตุผล:</b> ผู้บริหารไม่อนุมัติรายการที่เหลือทั้งหมด</p>
+                <p>กรุณาเข้าสู่ระบบเพื่อตรวจสอบและพิจารณาใหม่</p>
+                <br>
+                <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบ</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify head for PR return failed:', err);
+    }
+}
+
 // ============================================
 // PETTY CASH EMAIL NOTIFICATIONS
 // ============================================
@@ -769,6 +792,7 @@ window.UI = {
     sendEmail,
     notifyHeadForPR,
     notifyManagerForPR,
+    notifyHeadForPRReturn,
     notifyPurchasingForApproval,
     notifyHeadForApproval,
     notifyHeadForMemo,
