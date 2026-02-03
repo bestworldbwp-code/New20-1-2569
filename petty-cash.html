@@ -75,7 +75,10 @@
                     </div>
 
                     <!-- Submit -->
-                    <div class="text-center mt-3">
+                    <div class="d-flex gap-2 mt-3 justify-center">
+                        <button type="button" class="btn btn-info btn-lg" onclick="previewPettyCash()">
+                            👀 ดูตัวอย่าง (Preview)
+                        </button>
                         <button type="button" class="btn btn-primary btn-lg" onclick="submitPettyCash()">
                             📤 ส่งขออนุมัติ
                         </button>
@@ -268,6 +271,47 @@
                 UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
                 alert('Debug Error: ' + err.message + '\n\nดูรายละเอียดใน Console (F12)');
             }
+        }
+        async function previewPettyCash() {
+            const department = document.getElementById('department').value;
+            const requester = document.getElementById('requester').value.trim();
+            const requestDate = document.getElementById('requestDate').value;
+            const items = getItems();
+            const amountText = document.getElementById('amountText').value.trim();
+            const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+
+            // Validation
+            if (!department) {
+                UI.showToast('กรุณาเลือกแผนก', 'error');
+                return;
+            }
+
+            if (!requester) {
+                UI.showToast('กรุณาระบุชื่อผู้ขอเบิก', 'error');
+                return;
+            }
+
+            if (items.length === 0) {
+                UI.showToast('กรุณาเพิ่มรายการอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
+
+            const data = {
+                request_no: 'DRAFT-PREVIEW',
+                department,
+                requester,
+                request_date: requestDate,
+                items,
+                total_amount: totalAmount,
+                amount_text: amountText || '-',
+                status: 'preview'
+            };
+
+            // Save to session
+            sessionStorage.setItem('petty_cash_preview_data', JSON.stringify(data));
+
+            // Open window
+            window.open('view-petty-cash.html?preview=true', '_blank');
         }
     </script>
 </body>

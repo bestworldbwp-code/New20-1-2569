@@ -78,10 +78,14 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="button" class="btn btn-primary btn-lg w-full mt-2" id="btnSubmit"
-                        onclick="submitPR()">
-                        🚀 ส่งคำขออนุมัติ
-                    </button>
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="button" class="btn btn-info btn-lg w-full" onclick="previewPR()">
+                            👀 ดูตัวอย่าง (Preview)
+                        </button>
+                        <button type="button" class="btn btn-primary btn-lg w-full" id="btnSubmit" onclick="submitPR()">
+                            🚀 ส่งคำขออนุมัติ
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -260,6 +264,57 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
+        }
+        // Preview Function
+        async function previewPR() {
+            // Collect items
+            const items = [];
+            document.querySelectorAll('.item-row').forEach(row => {
+                const desc = row.querySelector('.item-desc').value.trim();
+                const code = row.querySelector('.item-code').value.trim();
+                const quantity = row.querySelector('.item-qty').value || '1';
+                const unit = row.querySelector('.item-unit').value.trim() || 'ชิ้น';
+
+                if (desc) {
+                    items.push({
+                        code: code,
+                        description: desc,
+                        quantity: quantity,
+                        unit: unit,
+                        status: 'pending' // Default for preview
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                UI.showToast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', 'error');
+                return;
+            }
+
+            // Get form values
+            const prData = {
+                pr_number: document.getElementById('pr_number').value.trim() || '-',
+                department: document.getElementById('department').value || '-',
+                requester: document.getElementById('requester').value.trim() || '-',
+                required_date: document.getElementById('required_date').value || '-',
+                header_remark: document.getElementById('header_remark').value.trim() || '-',
+                items: items,
+                created_at: new Date().toISOString(), // Mock current date
+                status: 'preview'
+            };
+
+            // Handle file for preview (create blob URL)
+            const fileInput = document.getElementById('attachment');
+            if (fileInput.files.length > 0) {
+                prData.has_attachment = true;
+                prData.attachment_name = fileInput.files[0].name;
+            }
+
+            // Save to session
+            sessionStorage.setItem('pr_preview_data', JSON.stringify(prData));
+
+            // Open window
+            window.open('view-pr.html?preview=true', '_blank');
         }
     </script>
 </body>

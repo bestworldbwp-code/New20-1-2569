@@ -355,6 +355,40 @@
             // Get ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             let id = urlParams.get('id');
+            const isPreview = urlParams.get('preview') === 'true';
+
+            // Handle Preview Mode
+            if (isPreview) {
+                const previewData = sessionStorage.getItem('petty_cash_preview_data');
+                if (!previewData) {
+                    document.body.innerHTML = '<p style="text-align: center; padding: 40px;">ไม่พบข้อมูลตัวอย่าง</p>';
+                    return;
+                }
+
+                const pc = JSON.parse(previewData);
+                document.title = '(Preview) ' + document.title;
+
+                // Add Ribbon
+                const ribbon = document.createElement('div');
+                ribbon.className = 'no-print';
+                ribbon.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 5px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); pointer-events: none; z-index: 2000; text-align: center; width: max-content;';
+                ribbon.innerHTML = '⚠️ โหมดตัวอย่าง (Preview Native)';
+                document.body.appendChild(ribbon);
+
+                // Hide status banner or set to preview
+                const statusBanner = document.getElementById('statusBanner');
+                if (statusBanner) {
+                    statusBanner.textContent = '⚠️ ตัวอย่างเอกสาร (ยังไม่ได้บันทึก)';
+                    statusBanner.className = 'status-banner no-print';
+                    statusBanner.style.background = '#fff3cd';
+                    statusBanner.style.color = '#856404';
+                }
+
+                // Render Data directly
+                renderPettyCashData(pc);
+                return; // Stop execution here for preview
+            }
+
             console.log('[DEBUG] Document ID from URL:', id);
 
             // Handle "undefined" string
@@ -415,65 +449,89 @@
                 return;
             }
 
-            try {
-                // Check if DB is loaded
-                if (typeof DB === 'undefined' || !DB.getPettyCashById) {
-                    throw new Error('Database Module (js/db.js) failed to load. Please check if Supabase is blocked or Config is wrong.');
-                }
+            // Check if DB is loaded
+            if (typeof DB === 'undefined' || !DB.getPettyCashById) {
+                throw new Error('Database Module (js/db.js) failed to load. Please check if Supabase is blocked or Config is wrong.');
+            }
 
-                // Load petty cash data with timeout protection
-                console.log('[DEBUG] Fetching data for ID:', id);
+            // Load petty cash data with timeout protection
+            console.log('[DEBUG] Fetching data for ID:', id);
 
-                const fetchPromise = DB.getPettyCashById(id);
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('การเรียกข้อมูลใช้เวลานานเกินไป (Request Timeout)')), 8000)
-                );
+            const fetchPromise = DB.getPettyCashById(id);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('การเรียกข้อมูลใช้เวลานานเกินไป (Request Timeout)')), 8000)
+            );
 
-                const pc = await Promise.race([fetchPromise, timeoutPromise]);
-                console.log('[DEBUG] Received data:', pc);
+            const pc = await Promise.race([fetchPromise, timeoutPromise]);
+            console.log('[DEBUG] Received data:', pc);
 
-                if (!pc) {
-                    UI.showToast('ไม่พบเอกสาร', 'error');
-                    return;
-                }
+            if (!pc) {
+                UI.showToast('ไม่พบเอกสาร', 'error');
+                return;
+            }
 
-                // Render data
-                document.getElementById('requestNo').textContent = pc.request_no;
-                document.getElementById('department').textContent = pc.department;
-                document.getElementById('requestDate').textContent = UI.formatDate(pc.request_date);
-                // document.getElementById('requesterName').textContent = pc.requester; // User requested to leave blank for manual sign
-                document.getElementById('totalAmount').textContent = Number(pc.total_amount).toLocaleString('th-TH', {
-                    minimumFractionDigits: 2
-                });
-                document.getElementById('amountText').textContent = pc.amount_text || '-';
+            renderPettyCashData(pc);
 
-                // Render items
-                const items = pc.items || [];
-                const tbody = document.getElementById('itemsBody');
-                tbody.innerHTML = '';
+        } catch (err) {
+            console.error('Error loading petty cash:', err);
+            const statusBanner = document.getElementById('statusBanner');
+            if (statusBanner) {
+                statusBanner.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                statusBanner.className = 'status-banner no-print rejected';
+            }
+            UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
 
-                items.forEach((item, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
+            // Debug info
+            const debugDiv = document.createElement('div');
+            debugDiv.className = 'no-print';
+            debugDiv.style.padding = '20px';
+            debugDiv.style.marginTop = '20px';
+            debugDiv.style.background = '#000';
+            debugDiv.style.color = '#fff';
+            debugDiv.innerHTML = `<pre>Debug Info:\nID: ${id}\nError: ${err.message}\nStack: ${err.stack}</pre>`;
+            document.body.appendChild(debugDiv);
+        }
+        });
+
+        function renderPettyCashData(pc) {
+            // Render data
+            document.getElementById('requestNo').textContent = pc.request_no;
+            document.getElementById('department').textContent = pc.department;
+            document.getElementById('requestDate').textContent = UI.formatDate(pc.request_date);
+            // document.getElementById('requesterName').textContent = pc.requester; // User requested to leave blank for manual sign
+            document.getElementById('totalAmount').textContent = Number(pc.total_amount).toLocaleString('th-TH', {
+                minimumFractionDigits: 2
+            });
+            document.getElementById('amountText').textContent = pc.amount_text || '-';
+
+            // Render items
+            const items = pc.items || [];
+            const tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                         <td class="col-no">${item.no || index + 1}</td>
                         <td>${item.detail}</td>
                         <td class="col-amount">${Number(item.amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })}</td>
                     `;
-                    tbody.appendChild(tr);
-                });
+                tbody.appendChild(tr);
+            });
 
-                // Add empty rows if less than 5 items
-                for (let i = items.length; i < 5; i++) {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
+            // Add empty rows if less than 5 items
+            for (let i = items.length; i < 5; i++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                         <td class="col-no">&nbsp;</td>
                         <td>&nbsp;</td>
                         <td class="col-amount">&nbsp;</td>
                     `;
-                    tbody.appendChild(tr);
-                }
+                tbody.appendChild(tr);
+            }
 
-                // Status banner
+            // Handle status banner if NOT preview (preview handles its own banner)
+            if (pc.status !== 'preview') {
                 const statusBanner = document.getElementById('statusBanner');
                 const statusMap = {
                     'pending_head': 'รอผู้จัดการแผนกตรวจสอบ',
@@ -484,55 +542,37 @@
                 };
                 statusBanner.textContent = statusMap[pc.status] || pc.status;
                 statusBanner.className = `status-banner no-print ${pc.status}`;
+            }
 
-                // Head approval
-                if (pc.head_approved_by) {
-                    document.getElementById('headApprovedBy').textContent = pc.head_approved_by;
-                    document.getElementById('headApprovedDate').textContent =
-                        'วันที่ ' + UI.formatDate(pc.head_approved_at);
-                }
+            // Head approval
+            if (pc.head_approved_by) {
+                document.getElementById('headApprovedBy').textContent = pc.head_approved_by;
+                document.getElementById('headApprovedDate').textContent =
+                    'วันที่ ' + UI.formatDate(pc.head_approved_at);
+            }
 
-                // Manager approval
-                if (pc.manager_approved_by) {
-                    document.getElementById('managerApprovedBy').textContent = pc.manager_approved_by;
-                    document.getElementById('managerApprovedDate').textContent =
-                        'วันที่ ' + UI.formatDate(pc.manager_approved_at);
-                }
+            // Manager approval
+            if (pc.manager_approved_by) {
+                document.getElementById('managerApprovedBy').textContent = pc.manager_approved_by;
+                document.getElementById('managerApprovedDate').textContent =
+                    'วันที่ ' + UI.formatDate(pc.manager_approved_at);
+            }
 
-                // Load header content
-                const headerContainer = document.getElementById('headerContainer');
-                let logoHtml = '';
-                if (typeof LOGO_BASE64 !== 'undefined') {
-                    logoHtml = `<img src="${LOGO_BASE64}" alt="Company Logo">`;
-                }
+            // Load header content
+            const headerContainer = document.getElementById('headerContainer');
+            let logoHtml = '';
+            if (typeof LOGO_BASE64 !== 'undefined') {
+                logoHtml = `<img src="${LOGO_BASE64}" alt="Company Logo">`;
+            }
 
-                headerContainer.innerHTML = `
+            headerContainer.innerHTML = `
                     ${logoHtml}
                     <h2>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
                     <p>328 ม.6 ต.คลองนิยมยาตรา อ.บางบ่อ จ.สมุทรปราการ 10560 โทร: 02-3175670-3</p>
                     <p>เลขประจำตัวผู้เสียภาษี 0115450001637</p>
                 `;
+        }
 
-            } catch (err) {
-                console.error('Error loading petty cash:', err);
-                const statusBanner = document.getElementById('statusBanner');
-                if (statusBanner) {
-                    statusBanner.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-                    statusBanner.className = 'status-banner no-print rejected';
-                }
-                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
-
-                // Debug info
-                const debugDiv = document.createElement('div');
-                debugDiv.className = 'no-print';
-                debugDiv.style.padding = '20px';
-                debugDiv.style.marginTop = '20px';
-                debugDiv.style.background = '#000';
-                debugDiv.style.color = '#fff';
-                debugDiv.innerHTML = `<pre>Debug Info:\nID: ${id}\nError: ${err.message}\nStack: ${err.stack}</pre>`;
-                document.body.appendChild(debugDiv);
-            }
-        });
     </script>
 </body>
 
