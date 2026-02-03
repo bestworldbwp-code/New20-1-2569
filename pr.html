@@ -227,8 +227,20 @@
                 const isBypass = await DB.checkMemoBypass(document.getElementById('department').value);
                 const initialStatus = isBypass ? 'pending_manager' : 'pending_head';
 
+                // Check duplicate PR number
+                const prNumberInput = document.getElementById('pr_number').value.trim();
+                if (prNumberInput) {
+                    const existingPR = await DB.getPRByNumber(prNumberInput);
+                    if (existingPR) {
+                        UI.showToast(`เลขที่ PR ${prNumberInput} มีอยู่ในระบบแล้ว กรุณาใช้เลขอื่น`, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        return;
+                    }
+                }
+
                 const prData = {
-                    pr_number: document.getElementById('pr_number').value.trim(),
+                    pr_number: prNumberInput,
                     department: document.getElementById('department').value,
                     requester: document.getElementById('requester').value.trim(),
                     required_date: document.getElementById('required_date').value,
