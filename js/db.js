@@ -157,6 +157,8 @@ async function getPRByNumber(prNumber) {
         .from('purchase_requests')
         .select('*')
         .eq('pr_number', prNumber.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
     if (error) throw error;
@@ -311,6 +313,8 @@ async function getMemoByNumber(memoNumber) {
         .from('memos')
         .select('*')
         .eq('memo_no', memoNumber.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
     if (error) throw error;
