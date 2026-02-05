@@ -537,7 +537,7 @@
                     'pending_head': 'รอผู้จัดการแผนกตรวจสอบ',
                     'pending_manager': 'รอผู้บริหารอนุมัติ',
                     'approved': '✅ อนุมัติแล้ว - พร้อมปริ้นไปเบิกเงิน',
-                    'rejected': '❌ ไม่อนุมัติ',
+                    'rejected': `❌ ไม่อนุมัติ - ${pc.cancel_reason || 'ไม่ระบุเหตุผล'}`,
                     'cancelled': 'ยกเลิก'
                 };
                 statusBanner.textContent = statusMap[pc.status] || pc.status;
