@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบขออนุญาตนำทรัพย์สินออกนอกบริษัท</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            color: #000;
+            background: #525659;
+            line-height: 1.4;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .header img {
+            height: 60px;
+            position: absolute;
+            left: 20px;
+            top: 0;
+        }
+
+        .header h1 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .header h2 {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .top-info-row {
+            margin-bottom: 10px;
+        }
+
+        .intro-text {
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        /* Table Section */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        th,
+        td {
+            border: 2px solid #000;
+            /* Thicker border as per image */
+            padding: 5px;
+            vertical-align: middle;
+        }
+
+        th {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .col-no {
+            width: 50px;
+            text-align: center;
+        }
+
+        .col-item {}
+
+        .col-qty {
+            width: 80px;
+            text-align: center;
+        }
+
+        .col-unit {
+            width: 80px;
+            text-align: center;
+        }
+
+        .col-remark {
+            width: 150px;
+        }
+
+        /* Purpose Section */
+        .purpose-section {
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .purpose-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            padding-left: 20px;
+        }
+
+        .checkbox-box {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #000;
+            margin-right: 10px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .checkbox-box.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -4px;
+            left: 1px;
+            font-size: 16px;
+        }
+
+        .dotted-line {
+            border-bottom: 1px dotted #000;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        /* Signatures Layout */
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .sig-block {
+            width: 45%;
+        }
+
+        .sig-line {
+            margin-bottom: 15px;
+            white-space: nowrap;
+        }
+
+        /* Middle Executive Section */
+        .executive-section {
+            border-top: 1px dotted #000;
+            padding-top: 15px;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .comment-section {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .center-sig {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        /* Bottom Committee */
+        .committee-section {
+            border-top: 1px dotted #000;
+            padding-top: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .committee-title {
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+
+        .committee-grid {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .committee-item {
+            text-align: center;
+            width: 24%;
+        }
+
+        .committee-line {
+            border-bottom: 1px dotted #000;
+            height: 1px;
+            margin: 0 10px 5px 10px;
+        }
+
+        /* Footer Notes */
+        .footer-note {
+            margin-top: 30px;
+            font-size: 12px;
+        }
+
+        /* Utility */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-print {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-close {
+            background: #6b7280;
+            color: white;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            .page {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="no-print">
+        <button class="btn btn-print" onclick="window.print()">🖨️ พิมพ์เอกสาร</button>
+        <button class="btn btn-close" onclick="window.location.href='index.html'">🏠 กลับหน้าหลัก</button>
+        <button class="btn btn-close" onclick="window.close()" style="background: #9ca3af;">❌ ปิดหน้าต่าง</button>
+    </div>
+
+    <div class="page" id="pageContent">
+        <div style="text-align: center; padding: 50px;">กำลังโหลดข้อมูล...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js?v=20260205"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/logo.js"></script>
+    <script>
+        async function loadDoc() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const isPreview = params.get('preview') === 'true';
+
+            let data;
+
+            try {
+                if (isPreview) {
+                    const previewData = sessionStorage.getItem('asset_removal_preview_data');
+                    if (!previewData) throw new Error('ไม่พบข้อมูลตัวอย่าง');
+                    data = JSON.parse(previewData);
+                } else if (id) {
+                    data = await DB.getAssetRemovalById(id);
+                } else {
+                    throw new Error('ไม่พบ ID เอกสาร');
+                }
+
+                renderDoc(data);
+
+            } catch (err) {
+                document.getElementById('pageContent').innerHTML = `<p style="text-align: center; color: red;">Error: ${err.message}</p>`;
+            }
+        }
+
+        function renderDoc(doc) {
+            // Unpack layout data
+            // If items is an array, it's legacy/simple. If object with {list, meta}, it's new.
+            let items = [];
+            let meta = { purpose: {}, to_person: '' };
+
+            if (Array.isArray(doc.items)) {
+                items = doc.items;
+            } else if (doc.items && doc.items.list) {
+                items = doc.items.list;
+                meta = doc.items.meta || meta;
+            }
+
+            const requestDate = new Date(doc.request_date);
+            const dateStr = `${requestDate.getDate()}/${requestDate.getMonth() + 1}/${requestDate.getFullYear() + 543}`;
+            const toPerson = meta.to_person || '........................................................';
+
+            // Generate Rows (ensure at least 5 empty rows for looks if few items)
+            let rowsHtml = '';
+            const minRows = 8;
+            const totalRows = Math.max(items.length, minRows);
+
+            for (let i = 0; i < totalRows; i++) {
+                const item = items[i] || {};
+                rowsHtml += `
+                    <tr>
+                        <td class="col-no">${i < items.length ? (i + 1) : '&nbsp;'}</td>
+                        <td class="col-item">${item.asset_name || '&nbsp;'}</td>
+                        <td class="col-qty">${item.quantity || '&nbsp;'}</td>
+                        <td class="col-unit">${item.unit || '&nbsp;'}</td>
+                        <td class="col-remark">${item.remark || '&nbsp;'}</td>
+                    </tr>
+                `;
+            }
+
+            // Purpose Checkboxes
+            const pType = meta.purpose.type || '';
+            const pDetail = meta.purpose.detail || '';
+
+            const isSale = pType === 'sale';
+            const isDispose = pType === 'dispose';
+            const isOther = pType === 'other';
+
+            const logoHtml = typeof LOGO_BASE64 !== 'undefined' ? `<img src="${LOGO_BASE64}" alt="logo">` : '';
+
+            // Status logic for signatures
+            // Head approved
+            const headApproved = doc.head_approved_at || (doc.status !== 'pending_head' && doc.status !== 'preview');
+            const headDate = doc.head_approved_at ? UI.formatDate(doc.head_approved_at).split(' ') : ['...', '...', '...'];
+            // Simplifying date display for signature to just .../.../... if not strictly formatted
+            const headSigDate = doc.head_approved_at ? new Date(doc.head_approved_at) : null;
+            const headDateStr = headSigDate ? `${headSigDate.getDate()}/${headSigDate.getMonth() + 1}/${headSigDate.getFullYear() + 543}` : '......../......../..........';
+
+            // Requester Date
+            // Use request date
+
+            const html = `
+                <div class="header">
+                    ${logoHtml}
+                    <h1>บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h1>
+                    <h2>ใบขออนุญาตนำทรัพสิน (เศษซาก) ออกนอกบริษัท</h2>
+                </div>
+
+                <div class="top-info">
+                    <div style="flex: 1;">เรียน &nbsp;&nbsp; ${toPerson}</div>
+                    <div style="text-align: right;">วันที่ &nbsp;&nbsp; ${dateStr}</div>
+                </div>
+
+                <div class="intro-text">
+                    ข้าพเจ้าขออนุญาต นำเศษซากซึ่งถือเป็นทรัพย์สินของบริษัท ออกนอกบริเวณบริษัท โดยมีรายการและวัตถุประสงค์ ดังนี้
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-no">ลำดับ</th>
+                            <th>รายการ</th>
+                            <th class="col-qty">จำนวน</th>
+                            <th class="col-unit">หน่วย</th>
+                            <th class="col-remark">หมายเหตุ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                        <tr>
+                            <td colspan="2" style="text-align: center; font-weight: bold;">รวม</td>
+                            <td style="text-align: center;">${items.length}</td>
+                            <td>รายการ</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="purpose-section">
+                    <div class="purpose-title">วัตถุประสงค์ของการนำทรัพย์สินออกนอกบริษัทฯ เพื่อ</div>
+                    <div class="checkbox-row">
+                        <span class="checkbox-box ${isSale ? 'checked' : ''}"></span>
+                        จำหน่าย เนื่องจาก <span class="dotted-line" style="width: 70%;">${isSale ? pDetail : ''}</span>
+                    </div>
+                    <div class="checkbox-row">
+                        <span class="checkbox-box ${isDispose ? 'checked' : ''}"></span>
+                        ทำลาย/กำจัด เนื่องจาก <span class="dotted-line" style="width: 68%;">${isDispose ? pDetail : ''}</span>
+                    </div>
+                    <div class="checkbox-row">
+                        <span class="checkbox-box ${isOther ? 'checked' : ''}"></span>
+                        อื่นๆ <span class="dotted-line" style="width: 80%;">${isOther ? pDetail : ''}</span>
+                    </div>
+                </div>
+
+                <div class="signature-row">
+                    <div class="sig-block">
+                        <div class="sig-line">ลงชื่อ ........................................................ ผู้ขอดำเนินการ</div>
+                         <div style="padding-left: 40px;">(${doc.requester})</div>
+                        <div style="padding-left: 40px; margin-top: 5px;">วันที่ &nbsp; ${dateStr}</div>
+                    </div>
+                    <div class="sig-block">
+                        <div class="sig-line">ลงชื่อ ........................................................ ผู้อนุมัติเบื้องต้น</div>
+                        <div style="padding-left: 40px;">( หัวหน้าแผนก${doc.department} )</div>
+                        ${headApproved ? `<div style="position:absolute; margin-top:-35px; margin-left:60px; color:green; font-weight:bold;">[ อนุมัติแล้ว ]</div>` : ''}
+                        <div style="padding-left: 40px; margin-top: 5px;">วันที่ &nbsp; ${headDateStr}</div>
+                    </div>
+                </div>
+
+                <div class="executive-section">
+                    <div style="font-weight: bold; margin-bottom: 10px;">เรียน ผู้ช่วยกรรมการผู้จัดการ</div>
+                    <div style="margin-left: 40px; margin-bottom: 10px;">โปรดพิจารณา ดำเนินการเกี่ยวกับทรัพย์สิน (เศษซาก) ตามรายละเอียดข้างต้น</div>
+                    
+                    <div style="font-weight: bold; margin-bottom: 5px;">ความเห็นผู้ช่วยกรรมการผู้จัดการ</div>
+                    <div class="comment-section">
+                        <div style="margin-bottom: 5px;">
+                            ( ${doc.status === 'approved' ? '✓' : '&nbsp;'} ) เห็นชอบ ...................................................................................
+                        </div>
+                        <div>
+                            ( ${doc.status === 'rejected' ? '✓' : '&nbsp;'} ) ไม่เห็นชอบ เพราะ...................................................................................
+                        </div>
+                    </div>
+
+                    <div class="center-sig">
+                        <div>........................................................</div>
+                        <div style="margin-top: 5px;">ผู้ช่วยกรรมการผู้จัดการ</div>
+                         ${doc.status === 'approved' ? `<div style="color:green; font-weight:bold; margin-top:-25px;">[ อนุมัติแล้ว ]</div>` : ''}
+                    </div>
+                </div>
+
+                <div class="committee-section">
+                    <div class="committee-title">คณะกรรมการดำเนินการ</div>
+                    <div class="committee-grid">
+                        <div class="committee-item">
+                            <div class="committee-line"></div>
+                            <div>ฝ่ายจัดซื้อ</div>
+                        </div>
+                        <div class="committee-item">
+                            <div class="committee-line"></div>
+                            <div>ฝ่ายทรัพยากรบุคคล</div>
+                        </div>
+                        <div class="committee-item">
+                            <div class="committee-line"></div>
+                            <div>ฝ่ายบัญชี</div>
+                        </div>
+                        <div class="committee-item">
+                            <div class="committee-line"></div>
+                            <div>เจ้าหน้าที่รักษาความปลอดภัย</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    <strong>หมายเหตุ :</strong> กรณีจำหน่ายหรือทำลายทรัพย์สิน จะต้องแนบเอกสารและหลักฐาน เพื่อประกอบการพิจารณา ดังนี้<br>
+                    1) รูปถ่ายทรัพย์สินที่จะทำการจำหน่ายหรือทำลาย (เพื่อขออนุมัติ)<br>
+                    2) รูปถ่ายทรัพย์สินและหลักฐานน้ำหนักสินค้าที่นำออก (ณ วันที่นำทรัพย์สินออกนอกบริษัท)
+                </div>
+            `;
+
+            document.getElementById('pageContent').innerHTML = html;
+        }
+
+        window.onload = loadDoc;
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,42 +31,54 @@
     </script>
     <style>
         body {
-            background-color: #1e293b; /* Slate 800 */
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            background-color: #1e293b;
+            /* Slate 800 */
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
             min-height: 100vh;
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
+
         .input-glow:focus {
             box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
         }
+
         .loader {
-            border: 3px solid rgba(255,255,255,0.1);
+            border: 3px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             border-top: 3px solid #0ea5e9;
             width: 24px;
             height: 24px;
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body class="flex items-center justify-center p-4">
 
     <div class="w-full max-w-md">
         <!-- Logo Area -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-brand-500 to-purple-600 mb-4 shadow-lg shadow-brand-500/20">
+            <div
+                class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-brand-500 to-purple-600 mb-4 shadow-lg shadow-brand-500/20">
                 <i class="fa-solid fa-magnifying-glass-location text-3xl text-white"></i>
             </div>
             <h1 class="text-3xl font-bold text-white mb-2">ติดตามสถานะ</h1>
@@ -75,29 +88,33 @@
         <!-- Search Card -->
         <div class="glass-card rounded-2xl p-8 relative overflow-hidden">
             <!-- Decorative circle -->
-            <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
+            <div
+                class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500 rounded-full blur-[80px] opacity-20 pointer-events-none">
+            </div>
 
             <form id="trackForm" onsubmit="handleSearch(event)">
                 <div class="mb-6">
-                    <label for="docNumber" class="block text-sm font-medium text-slate-300 mb-2">เลขที่เอกสาร (Document No.)</label>
+                    <label for="docNumber" class="block text-sm font-medium text-slate-300 mb-2">เลขที่เอกสาร (Document
+                        No.)</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-regular fa-file-lines text-slate-500"></i>
                         </div>
-                        <input type="text" id="docNumber" 
-                            class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 input-glow transition-all" 
+                        <input type="text" id="docNumber"
+                            class="block w-full pl-10 pr-3 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 input-glow transition-all"
                             placeholder="เช่น PR-2025-001" required autocomplete="off">
                     </div>
                 </div>
-                
-                <button type="submit" 
+
+                <button type="submit"
                     class="w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-brand-500/30 transform transition-all active:scale-[0.98] flex justify-center items-center gap-2">
                     <span id="btnText">ค้นหาเอกสาร</span>
                     <div id="btnLoader" class="loader hidden"></div>
                 </button>
             </form>
 
-            <div id="errorMessage" class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-sm text-center animate-[fadeIn_0.3s_ease-out]">
+            <div id="errorMessage"
+                class="hidden mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-sm text-center animate-[fadeIn_0.3s_ease-out]">
                 <i class="fa-solid fa-circle-exclamation mr-1"></i> ไม่พบเอกสารหมายเลขนี้ในระบบ
             </div>
         </div>
@@ -112,11 +129,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/db.js?v=20260202-2"></script>
-    
+
     <script>
         async function handleSearch(e) {
             e.preventDefault();
-            
+
             const input = document.getElementById('docNumber');
             const docNo = input.value.trim();
             const btn = document.querySelector('button[type="submit"]');
@@ -148,14 +165,23 @@
                     return;
                 }
 
-                // 3. Not Found
+                // 3. Try finding Asset Removal (Hidden for now)
+                /*
+                const assetRemoval = await DB.getAssetRemovalByNumber(docNo);
+                if (assetRemoval) {
+                    window.location.href = `view-asset-removal.html?id=${assetRemoval.id}`;
+                    return;
+                }
+                */
+
+                // 4. Not Found
                 throw new Error('Not found');
 
             } catch (err) {
                 // Show Error
                 errorMsg.classList.remove('hidden');
                 input.classList.add('border-red-500');
-                
+
                 // Shake animation
                 const card = document.querySelector('.glass-card');
                 card.animate([
@@ -175,5 +201,5 @@
         }
     </script>
 </body>
-</html>
 
+</html>

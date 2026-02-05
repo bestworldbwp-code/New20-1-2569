@@ -833,6 +833,200 @@ async function exportPettyCashToCSV() {
     return csv;
 }
 
+// ============================================
+// ASSET REMOVAL REQUESTS
+// ============================================
+
+async function generateAssetRemovalNumber() {
+    const now = new Date();
+    const th = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    const yearMonth = `${th.getUTCFullYear()}${String(th.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    // Count existing requests this month
+    const { count } = await db
+        .from('asset_removal_requests')
+        .select('id', { count: 'exact', head: true })
+        .like('request_no', `AR-${yearMonth}-%`);
+
+    const seq = String((count || 0) + 1).padStart(3, '0');
+    return `AR-${yearMonth}-${seq}`;
+}
+
+async function createAssetRemoval(data) {
+    const requestNo = await generateAssetRemovalNumber();
+
+    const { data: result, error } = await db
+        .from('asset_removal_requests')
+        .insert([{
+            ...data,
+            request_no: requestNo
+        }])
+        .select();
+
+    if (error) throw error;
+
+    // Log audit
+    await logAudit('CREATE_ASSET_REMOVAL', 'asset_removal', result[0].id, requestNo, { requester: data.requester });
+
+    return result[0];
+}
+
+async function getAssetRemovalById(id) {
+    const { data, error } = await db
+        .from('asset_removal_requests')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+async function getAssetRemovalByNumber(requestNo) {
+    const { data, error } = await db
+        .from('asset_removal_requests')
+        .select('*')
+        .eq('request_no', requestNo.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data;
+}
+
+async function getAssetRemovalByStatus(status, department = null) {
+    let query = db
+        .from('asset_removal_requests')
+        .select('*')
+        .eq('status', status)
+        .order('created_at', { ascending: false });
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+async function getAssetRemovalHistory(department = null) {
+    let query = db
+        .from('asset_removal_requests')
+        .select('*')
+        .in('status', ['pending_manager', 'approved', 'rejected', 'cancelled'])
+        .order('created_at', { ascending: false });
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+async function updateAssetRemoval(id, updates, action = 'UPDATE_ASSET_REMOVAL') {
+    const { data, error } = await db
+        .from('asset_removal_requests')
+        .update(updates)
+        .eq('id', id)
+        .select();
+
+    if (error) throw error;
+
+    // Log audit
+    await logAudit(action, 'asset_removal', id, data[0].request_no, updates);
+
+    return data[0];
+}
+
+async function approveAssetRemovalByHead(id, approverDept) {
+    const updates = {
+        status: 'pending_manager',
+        head_approved_at: new Date().toISOString(),
+        head_approved_by: approverDept
+    };
+
+    return await updateAssetRemoval(id, updates, 'APPROVE_ASSET_REMOVAL_HEAD');
+}
+
+async function approveAssetRemovalByManager(id) {
+    const updates = {
+        status: 'approved',
+        manager_approved_at: new Date().toISOString(),
+        manager_approved_by: 'ผู้บริหาร'
+    };
+
+    return await updateAssetRemoval(id, updates, 'APPROVE_ASSET_REMOVAL_MANAGER');
+}
+
+async function rejectAssetRemoval(id, reason, role) {
+    const updates = {
+        status: 'rejected',
+        cancel_reason: `ตีกลับโดย ${role}: ${reason}`
+    };
+
+    return await updateAssetRemoval(id, updates, 'REJECT_ASSET_REMOVAL');
+}
+
+async function cancelAssetRemoval(id, reason) {
+    const updates = {
+        status: 'cancelled',
+        cancel_reason: reason
+    };
+
+    return await updateAssetRemoval(id, updates, 'CANCEL_ASSET_REMOVAL');
+}
+
+async function countPendingAssetRemoval(status, department = null) {
+    let query = db
+        .from('asset_removal_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', status);
+
+    if (department) {
+        query = query.eq('department', department);
+    }
+
+    const { count } = await query;
+    return count || 0;
+}
+
+async function exportAssetRemovalToCSV() {
+    const { data, error } = await db
+        .from('asset_removal_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!data.length) return null;
+
+    let csv = '\uFEFF'; // BOM for Thai
+    csv += 'วันที่ขอ,เลขที่,ผู้ขอ,แผนก,จำนวนรายการ,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
+
+    data.forEach(row => {
+        const formatD = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+        };
+        const formatDT = (iso) => {
+            if (!iso) return '-';
+            const date = new Date(iso);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
+        };
+
+        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_items}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}"\n`;
+    });
+
+    return csv;
+}
+
+
 // Make functions globally available
 window.DB = {
     getDepartments,
@@ -892,6 +1086,19 @@ window.DB = {
     rejectPettyCash,
     cancelPettyCash,
     countPendingPettyCash,
-    exportPettyCashToCSV
+    exportPettyCashToCSV,
+    // Asset Removal
+    createAssetRemoval,
+    getAssetRemovalById,
+    getAssetRemovalByNumber,
+    getAssetRemovalByStatus,
+    getAssetRemovalHistory,
+    updateAssetRemoval,
+    approveAssetRemovalByHead,
+    approveAssetRemovalByManager,
+    rejectAssetRemoval,
+    cancelAssetRemoval,
+    countPendingAssetRemoval,
+    exportAssetRemovalToCSV
 };
 

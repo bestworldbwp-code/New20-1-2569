@@ -764,6 +764,77 @@ async function notifyAccountingForPettyCashApproval(requestNo, department, amoun
     }
 }
 
+// ============================================
+// ASSET REMOVAL EMAIL NOTIFICATIONS
+// ============================================
+
+async function notifyHeadForAssetRemoval(department, requestNo, totalItems) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const adminUrl = window.location.origin + '/admin.html';
+            await sendEmail(
+                dept.head_email,
+                `[นำทรัพสินออกนอกบริษัท] แผนก${department} ขออนุญาต: ${requestNo}`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>มีคำขออนุญาตนำทรัพสินออกนอกบริษัทใหม่</p>
+                <p><b>เลขที่:</b> ${requestNo}</p>
+                <p><b>จำนวนรายการ:</b> ${totalItems} รายการ</p>
+                <br>
+                <p><a href="${adminUrl}">👉 คลิกที่นี่เพื่อเข้าสู่ระบบตรวจสอบ</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify head for asset removal failed:', err);
+    }
+}
+
+async function notifyManagerForAssetRemoval(requestNo, department, totalItems) {
+    try {
+        const managerEmail = await DB.getSetting('manager_email') || CONFIG.defaultEmails.manager;
+        const adminUrl = window.location.origin + '/admin.html';
+
+        await sendEmail(
+            managerEmail,
+            `[นำทรัพสินออกนอกบริษัท] ${requestNo} รอการอนุมัติ`,
+            `<h3>เรียน ผู้บริหารระดับสูง</h3>
+            <p>คำขออนุญาตนำทรัพสินออก <b>${requestNo}</b> จากแผนก ${department}</p>
+            <p>ผ่านการตรวจสอบจากผู้จัดการแผนกแล้ว</p>
+            <p><b>จำนวนรายการ:</b> ${totalItems} รายการ</p>
+            <br>
+            <p><a href="${adminUrl}">👉 คลิกเพื่อเข้าสู่ระบบอนุมัติ</a></p>`
+        );
+    } catch (err) {
+        console.warn('Notify manager for asset removal failed:', err);
+    }
+}
+
+async function notifyRequesterForAssetRemovalApproval(department, requestNo, requestId) {
+    try {
+        const departments = await DB.getDepartments();
+        const dept = departments.find(d => d.name === department);
+
+        if (dept && dept.head_email) {
+            const viewUrl = window.location.origin + `/view-asset-removal.html?id=${requestId}`;
+
+            await sendEmail(
+                dept.head_email,
+                `[อนุมัติแล้ว] นำทรัพสินออก ${requestNo}`,
+                `<h3>เรียน ผู้จัดการแผนก (${department})</h3>
+                <p>คำขออนุญาตนำทรัพสินออก <b>${requestNo}</b></p>
+                <p>ได้รับการอนุมัติจากผู้บริหารเรียบร้อยแล้ว ✅</p>
+                <hr>
+                <p>📄 <a href="${viewUrl}">คลิกเพื่อดูเอกสารและพิมพ์ใบอนุญาต</a></p>`
+            );
+        }
+    } catch (err) {
+        console.warn('Notify requester for asset removal approval failed:', err);
+    }
+}
+
+
 // Make UI functions globally available
 window.UI = {
     showToast,
@@ -802,5 +873,9 @@ window.UI = {
     notifyHeadForPettyCash,
     notifyManagerForPettyCash,
     notifyRequesterForPettyCashApproval,
-    notifyAccountingForPettyCashApproval
+    notifyAccountingForPettyCashApproval,
+    // Asset Removal
+    notifyHeadForAssetRemoval,
+    notifyManagerForAssetRemoval,
+    notifyRequesterForAssetRemovalApproval
 };

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>นำทรัพสินออกนอกบริษัท | ระบบเอกสารออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container" style="padding: 30px 20px;">
+        <div class="card" style="max-width: 1000px; margin: 0 auto;">
+            <div class="card-header">
+                <div class="d-flex align-center justify-between">
+                    <a href="index.html" class="btn btn-outline btn-sm">⬅️ กลับหน้าหลัก</a>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Header -->
+                <div class="text-center mb-3">
+                    <img id="companyLogo" src="" alt="Company Logo" style="max-height: 80px; margin-bottom: 8px;">
+                    <h2 style="margin-bottom: 4px;">บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด</h2>
+                    <h3 style="color: #f59e0b;">📤 ใบขออนุญาตนำทรัพสิน (เศษซาก) ออกนอกบริษัท</h3>
+                </div>
+
+                <form id="assetRemovalForm" onsubmit="return false;">
+                    <div class="row row-2">
+                        <div class="form-group">
+                            <label class="form-label">เรียน (To) *</label>
+                            <input type="text" id="to_person" class="form-control" placeholder="เช่น ผู้จัดการฝ่ายบุคคล"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">วันที่ (Date) *</label>
+                            <input type="date" id="request_date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row row-2">
+                        <div class="form-group">
+                            <label class="form-label">ชื่อผู้ขอ (Requester) *</label>
+                            <input type="text" id="requester" class="form-control" required
+                                placeholder="ระบุชื่อผู้ขออนุญาต">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">แผนก (Department) *</label>
+                            <select id="department" class="form-control form-select" required>
+                                <option value="" disabled selected>-- กรุณาเลือก --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Asset Items Table -->
+                    <div class="form-group">
+                        <label class="form-label">รายการทรัพสิน *</label>
+                        <div style="overflow-x: auto;">
+                            <table class="table" id="itemsTable" style="min-width: 800px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">ลำดับ</th>
+                                        <th style="width: 300px;">รายการ</th>
+                                        <th style="width: 100px;">จำนวน</th>
+                                        <th style="width: 100px;">หน่วย</th>
+                                        <th style="width: 200px;">หมายเหตุ</th>
+                                        <th style="width: 80px;">ลบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsBody">
+                                    <tr data-row="1">
+                                        <td class="text-center">1</td>
+                                        <td><input type="text" class="form-control item-name" required
+                                                placeholder="ชื่อทรัพย์สิน"></td>
+                                        <td><input type="number" class="form-control item-qty" min="1" value="1"
+                                                required></td>
+                                        <td><input type="text" class="form-control item-unit" required
+                                                placeholder="เช่น ชิ้น, เครื่อง"></td>
+                                        <td><input type="text" class="form-control item-remark"
+                                                placeholder="ระบุหมายเหตุ"></td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-danger btn-sm"
+                                                onclick="removeRow(1)">🗑️</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm mt-2" onclick="addRow()">
+                            ➕ เพิ่มรายการ
+                        </button>
+                    </div>
+
+                    <!-- Purpose Section -->
+                    <div class="form-group mt-4 p-3 border rounded">
+                        <label class="form-label mb-2">วัตถุประสงค์ของการนำทรัพย์สินออกนอกบริษัทฯ เพื่อ *</label>
+
+                        <div class="mb-2">
+                            <input type="radio" id="purpose_sale" name="purpose_type" value="sale"
+                                onchange="togglePurposeInput()">
+                            <label for="purpose_sale">จำหน่าย เนื่องจาก</label>
+                            <input type="text" id="purpose_sale_text" class="form-control d-inline-block w-auto ml-2"
+                                style="width: 60%;" disabled>
+                        </div>
+
+                        <div class="mb-2">
+                            <input type="radio" id="purpose_dispose" name="purpose_type" value="dispose"
+                                onchange="togglePurposeInput()">
+                            <label for="purpose_dispose">ทำลาย/กำจัด เนื่องจาก</label>
+                            <input type="text" id="purpose_dispose_text" class="form-control d-inline-block w-auto ml-2"
+                                style="width: 60%;" disabled>
+                        </div>
+
+                        <div class="mb-2">
+                            <input type="radio" id="purpose_other" name="purpose_type" value="other"
+                                onchange="togglePurposeInput()">
+                            <label for="purpose_other">อื่นๆ</label>
+                            <input type="text" id="purpose_other_text" class="form-control d-inline-block w-auto ml-2"
+                                style="width: 80%;" disabled>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="button" class="btn btn-info btn-lg w-full" onclick="previewAssetRemoval()">
+                            👀 ดูตัวอย่าง (Preview)
+                        </button>
+                        <button type="button" class="btn btn-success btn-lg w-full" id="btnSubmit"
+                            onclick="submitAssetRemoval()">
+                            🚀 ส่งคำขออนุญาต
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js?v=20260205"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/logo.js"></script>
+    <script>
+        let rowCounter = 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function () {
+            await UI.populateDepartmentSelect('department');
+            document.getElementById('request_date').value = UI.getTodayDate();
+
+            // Set logo
+            if (typeof LOGO_BASE64 !== 'undefined') {
+                document.getElementById('companyLogo').src = LOGO_BASE64;
+            }
+
+            // Prevent Enter submit
+            document.getElementById('assetRemovalForm').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        // Toggle Purpose Input
+        function togglePurposeInput() {
+            document.getElementById('purpose_sale_text').disabled = !document.getElementById('purpose_sale').checked;
+            document.getElementById('purpose_dispose_text').disabled = !document.getElementById('purpose_dispose').checked;
+            document.getElementById('purpose_other_text').disabled = !document.getElementById('purpose_other').checked;
+
+            if (!document.getElementById('purpose_sale').checked) document.getElementById('purpose_sale_text').value = '';
+            if (!document.getElementById('purpose_dispose').checked) document.getElementById('purpose_dispose_text').value = '';
+            if (!document.getElementById('purpose_other').checked) document.getElementById('purpose_other_text').value = '';
+        }
+
+        function addRow() {
+            rowCounter++;
+            const tbody = document.getElementById('itemsBody');
+            const newRow = document.createElement('tr');
+            newRow.setAttribute('data-row', rowCounter);
+            newRow.innerHTML = `
+                <td class="text-center">${rowCounter}</td>
+                <td><input type="text" class="form-control item-name" required placeholder="ชื่อทรัพย์สิน"></td>
+                <td><input type="number" class="form-control item-qty" min="1" value="1" required></td>
+                <td><input type="text" class="form-control item-unit" required placeholder="หน่วย"></td>
+                <td><input type="text" class="form-control item-remark" placeholder="ระบุหมายเหตุ"></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowCounter})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            updateRowNumbers();
+        }
+
+        function removeRow(rowNum) {
+            const rows = document.querySelectorAll('#itemsBody tr');
+            if (rows.length <= 1) {
+                UI.showToast('ต้องมีอย่างน้อย 1 รายการ', 'warning');
+                return;
+            }
+            const row = document.querySelector(`tr[data-row="${rowNum}"]`);
+            if (row) {
+                row.remove();
+                updateRowNumbers();
+            }
+        }
+
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('#itemsBody tr');
+            rows.forEach((row, index) => {
+                row.querySelector('td:first-child').textContent = index + 1;
+            });
+        }
+
+        function collectItems() {
+            const rows = document.querySelectorAll('#itemsBody tr');
+            const items = [];
+            let isValid = true;
+
+            rows.forEach((row, index) => {
+                const name = row.querySelector('.item-name').value.trim();
+                const qty = parseInt(row.querySelector('.item-qty').value);
+                const unit = row.querySelector('.item-unit').value.trim();
+                const remark = row.querySelector('.item-remark').value.trim();
+
+                if (!name || !qty || !unit) {
+                    isValid = false;
+                    return;
+                }
+
+                items.push({
+                    no: index + 1,
+                    asset_name: name,
+                    quantity: qty,
+                    unit: unit,
+                    remark: remark
+                });
+            });
+
+            return isValid ? items : null;
+        }
+
+        function getPurposeData() {
+            if (document.getElementById('purpose_sale').checked) {
+                return { type: 'sale', detail: document.getElementById('purpose_sale_text').value.trim() };
+            }
+            if (document.getElementById('purpose_dispose').checked) {
+                return { type: 'dispose', detail: document.getElementById('purpose_dispose_text').value.trim() };
+            }
+            if (document.getElementById('purpose_other').checked) {
+                return { type: 'other', detail: document.getElementById('purpose_other_text').value.trim() };
+            }
+            return null;
+        }
+
+        // Form submit
+        async function submitAssetRemoval() {
+            const btn = document.getElementById('btnSubmit');
+            const originalText = btn.innerHTML;
+
+            try {
+                // Validate items
+                const items = collectItems();
+                if (!items) {
+                    UI.showToast('กรุณากรอกรายการทรัพย์สินให้ครบถ้วน', 'error');
+                    return;
+                }
+
+                // Validate Purpose
+                const purpose = getPurposeData();
+                if (!purpose || !purpose.detail) {
+                    UI.showToast('กรุณาระบุวัตถุประสงค์และรายละเอียด', 'error');
+                    return;
+                }
+
+                // Validate To Person
+                const toPerson = document.getElementById('to_person').value.trim();
+                if (!toPerson) {
+                    UI.showToast('กรุณาระบุเรียน (To)', 'error');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '⏳ กำลังบันทึก...';
+
+                // Store complex object in items for simplicity in existing schema
+                // We'll wrap the extra metadata into the items JSON or a specific structure
+                // Use a special item or encoded data if schema is rigid, 
+                // BUT since JSONB is flexible, we can add top-level props to the JSON we send,
+                // OR since we are using the `items` text column in valid JSON...
+
+                // Wait, DB schema has `items JSONB`. We can put anything there.
+                // But `createAssetRemoval` in db.js takes `data` and inserts it.
+                // The columns are fixed: request_no, department, requester, request_date, items, total_items, status...
+                // There is no `purpose` column in standard schema I created.
+                // I will add purpose info into `items` array as a special metadata entry 
+                // OR better: Update the schema? No user said "don't upload yet".
+                // I will store purpose and to_person inside the `items` JSONB as a separate key if possible, 
+                // or just append it to the items list? No that's messy.
+                // Best approach: Store it in `cancel_reason`? No.
+                // Store it in `items` JSON array?  
+                // structure: { items: [...], purpose: {...}, to: "..." } -> This is saved to `items` column.
+                // This changes the type of `items` column from Array to Object. 
+                // DB Schema says `items JSONB DEFAULT '[]'`. It expects array usually but JSONB can be object.
+                // Let's stick to Array for items, but maybe add a special "meta" item?
+                // Or I can add new columns. Since I haven't deployed to prod (user said "don't upload"), 
+                // I can assume I can adjust the SQL schema or just abuse the JSON column.
+
+                // Let's use the `items` column to store the whole payload including metadata.
+                // Payload: { list: [items], meta: { purpose, to_person } }
+                // DB.js creates it using `...data`. 
+                // I will pass `items` as this object.
+
+                const fullPayload = {
+                    list: items,
+                    meta: {
+                        purpose: purpose,
+                        to_person: toPerson
+                    }
+                };
+
+                const assetRemovalData = {
+                    department: document.getElementById('department').value,
+                    requester: document.getElementById('requester').value.trim(),
+                    request_date: document.getElementById('request_date').value,
+                    items: fullPayload, // Saving Object instead of Array
+                    total_items: items.length,
+                    status: 'pending_head'
+                };
+
+                const newAssetRemoval = await DB.createAssetRemoval(assetRemovalData);
+
+                // Send email
+                // Note: Email template might need adjustment to assume items is array. 
+                // ui.js `notify...` function mostly just sends link, doesn't parse items deeply usually.
+                // Checked ui.js: notifyHeadForAssetRemoval uses `totalItems`. That is fine.
+
+                btn.innerHTML = '⏳ ส่งแจ้งเตือน...';
+                await UI.notifyHeadForAssetRemoval(assetRemovalData.department, newAssetRemoval.request_no, items.length);
+
+                UI.showToast('บันทึกข้อมูลเรียบร้อย!', 'success');
+
+                if (confirm('✅ บันทึกคำขออนุญาตเรียบร้อย!\n\nกด "ตกลง" เพื่อไปยังหน้าพิมพ์เอกสาร')) {
+                    // Redirect to view page directly to avoid popup blockers
+                    window.location.href = `view-asset-removal.html?id=${newAssetRemoval.id}`;
+                } else {
+                    window.location.href = 'index.html';
+                }
+
+            } catch (err) {
+                console.error(err);
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // Preview Function
+        async function previewAssetRemoval() {
+            const items = collectItems();
+            if (!items) {
+                UI.showToast('กรุณากรอกรายการทรัพย์สินให้ครบถ้วน', 'error');
+                return;
+            }
+            const purpose = getPurposeData();
+            if (!purpose || !purpose.detail) {
+                UI.showToast('กรุณาระบุวัตถุประสงค์และรายละเอียด', 'error');
+                return;
+            }
+            const toPerson = document.getElementById('to_person').value.trim();
+            if (!toPerson) {
+                UI.showToast('กรุณาระบุเรียน (To)', 'error');
+                return;
+            }
+
+            const fullPayload = {
+                list: items,
+                meta: {
+                    purpose: purpose,
+                    to_person: toPerson
+                }
+            };
+
+            const assetRemovalData = {
+                request_no: 'AR-PREVIEW',
+                department: document.getElementById('department').value || '-',
+                requester: document.getElementById('requester').value.trim() || '-',
+                request_date: document.getElementById('request_date').value || '-',
+                items: fullPayload,
+                total_items: items.length,
+                status: 'preview'
+            };
+
+            sessionStorage.setItem('asset_removal_preview_data', JSON.stringify(assetRemovalData));
+            window.open('view-asset-removal.html?preview=true', '_blank');
+        }
+    </script>
+</body>
+
+</html>
