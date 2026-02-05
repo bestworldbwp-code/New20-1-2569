@@ -499,6 +499,7 @@
                     <button class="btn btn-primary" onclick="window.open('view-pr.html?id=${currentDoc.id}&mode=original', '_blank')">🖨️ พิมพ์</button>`;
             } else {
                 footer.innerHTML = `
+                    <button class="btn btn-danger" onclick="rejectAllPR()">❌ ตีกลับทั้งหมด</button>
                     <button class="btn btn-success" onclick="approveDocument()">✅ ตกลง</button>`;
             }
         }
@@ -537,6 +538,7 @@
                     <button class="btn btn-primary" onclick="window.open('view-memo.html?id=${currentDoc.id}', '_blank')">🖨️ พิมพ์</button>`;
             } else {
                 footer.innerHTML = `
+                    <button class="btn btn-danger" onclick="rejectAllMemo()">❌ ตีกลับทั้งหมด</button>
                     <button class="btn btn-success" onclick="approveDocument()">✅ ตกลง</button>`;
             }
         }
@@ -764,6 +766,54 @@
                 UI.hideLoading();
                 UI.hideModal('detailModal');
                 UI.showToast('ตีกลับเอกสารเรียบร้อย', 'warning');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        // Reject All PR - ตีกลับเอกสารทั้งหมด
+        async function rejectAllPR() {
+            const reason = prompt('กรุณาระบุเหตุผลที่ตีกลับเอกสารทั้งหมด:');
+            if (!reason || !reason.trim()) {
+                UI.showToast('กรุณาระบุเหตุผล', 'warning');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+                const roleName = currentUserRole === 'head' ? 'ผู้จัดการแผนก' : 'ผู้บริหาร';
+                await DB.rejectPR(currentDoc.id, reason.trim(), roleName);
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('ตีกลับเอกสารทั้งหมดเรียบร้อย', 'warning');
+                loadData();
+
+            } catch (err) {
+                UI.hideLoading();
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        // Reject All Memo - ตีกลับบันทึกข้อความทั้งหมด
+        async function rejectAllMemo() {
+            const reason = prompt('กรุณาระบุเหตุผลที่ตีกลับเอกสารทั้งหมด:');
+            if (!reason || !reason.trim()) {
+                UI.showToast('กรุณาระบุเหตุผล', 'warning');
+                return;
+            }
+
+            try {
+                UI.showLoading('กำลังบันทึก...');
+                const roleName = currentUserRole === 'head' ? 'ผู้จัดการแผนก' : 'ผู้บริหาร';
+                await DB.rejectMemo(currentDoc.id, reason.trim(), roleName);
+
+                UI.hideLoading();
+                UI.hideModal('detailModal');
+                UI.showToast('ตีกลับเอกสารทั้งหมดเรียบร้อย', 'warning');
                 loadData();
 
             } catch (err) {
