@@ -592,6 +592,12 @@
                         <p><strong>รวมทั้งสิ้น:</strong> <span style="font-size: 1.25rem; color: var(--primary);">${Number(currentDoc.total_amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท</span></p>
                         ${currentDoc.amount_text ? `<p><strong>จำนวนเงิน (ตัวอักษร):</strong> ${currentDoc.amount_text}</p>` : ''}
                     </div>
+                    
+                    ${currentDoc.attachment_url ? `
+                        <p class="mt-2">
+                            <strong>ไฟล์แนบ:</strong> 
+                            <a href="${currentDoc.attachment_url}" target="_blank" class="text-primary">📎 เปิดดูเอกสาร</a>
+                        </p>` : ''}
                 </div>`;
 
             if (isHistory) {

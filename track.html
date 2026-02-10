@@ -165,7 +165,14 @@
                     return;
                 }
 
-                // 3. Try finding Asset Removal (Hidden for now)
+                // 3. Try finding Petty Cash
+                const pettyCash = await DB.getPettyCashByNumber(docNo);
+                if (pettyCash) {
+                    window.location.href = `view-petty-cash.html?id=${pettyCash.id}`;
+                    return;
+                }
+
+                // 4. Try finding Asset Removal (Hidden for now)
                 /*
                 const assetRemoval = await DB.getAssetRemovalByNumber(docNo);
                 if (assetRemoval) {

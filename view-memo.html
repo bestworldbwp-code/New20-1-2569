@@ -233,7 +233,10 @@
                 const managerApproved = memo.status === 'processed';
 
                 const attachmentHtml = memo.attachment_url
-                    ? `<div class="attachment-box"><strong>เอกสารแนบ:</strong> <a href="${memo.attachment_url}" target="_blank">เปิดดูเอกสาร</a></div>`
+                    ? `<div class="no-print" style="background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fbbf24; margin-bottom: 20px;">
+                        <strong style="color: #92400e;">📎 ไฟล์แนบ:</strong> 
+                        <a href="${memo.attachment_url}" target="_blank" style="color: #0284c7; text-decoration: underline;">เปิดดูเอกสาร</a>
+                    </div>`
                     : '';
 
                 document.getElementById('pageContent').innerHTML = `

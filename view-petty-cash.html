@@ -310,6 +310,14 @@
             </div>
         </div>
 
+        <!-- Attachment Link (Screen Only) -->
+        <div class="no-print" id="attachmentSection"
+            style="margin-top: 10px; padding: 10px; background: #fffbeb; border: 1px solid #fbbf24; border-radius: 4px; display: none;">
+            <strong style="color: #92400e;">📎 ไฟล์แนบ:</strong>
+            <a id="attachmentLink" href="#" target="_blank"
+                style="color: #0284c7; text-decoration: underline;">เปิดดูเอกสาร</a>
+        </div>
+
         <!-- Signatures -->
         <div class="signatures">
             <div class="signature-box">
@@ -556,6 +564,16 @@
                 document.getElementById('managerApprovedBy').textContent = pc.manager_approved_by;
                 document.getElementById('managerApprovedDate').textContent =
                     'วันที่ ' + UI.formatDate(pc.manager_approved_at);
+            }
+
+            // Show attachment if exists
+            if (pc.attachment_url) {
+                const attachmentSection = document.getElementById('attachmentSection');
+                const attachmentLink = document.getElementById('attachmentLink');
+                if (attachmentSection && attachmentLink) {
+                    attachmentLink.href = pc.attachment_url;
+                    attachmentSection.style.display = 'block';
+                }
             }
 
             // Load header content

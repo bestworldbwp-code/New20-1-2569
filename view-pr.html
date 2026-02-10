@@ -588,6 +588,13 @@
                     <strong>หมายเหตุ:</strong> ${pr.header_remark || '-'}
                 </div>
                 
+                ${pr.attachment_url ? `
+                    <div class="no-print" style="background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fbbf24; margin-bottom: 15px;">
+                        <strong style="color: #92400e;">📎 ไฟล์แนบ:</strong> 
+                        <a href="${pr.attachment_url}" target="_blank" style="color: #0284c7; text-decoration: underline;">เปิดดูเอกสาร</a>
+                    </div>
+                ` : ''}
+                
                 <div class="signature-area">
                     <div class="sign-box">
                         <div class="label">ผู้ขอซื้อ</div>

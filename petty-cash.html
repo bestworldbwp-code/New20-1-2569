@@ -74,6 +74,16 @@
                         </div>
                     </div>
 
+                    <!-- File Attachment -->
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label">📎 แนบไฟล์เอกสาร (ถ้ามี)</label>
+                        <input type="file" id="attachment" class="form-control"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        <small class="text-muted" style="display: block; margin-top: 4px;">
+                            รองรับไฟล์: PDF, รูปภาพ, Word, Excel (ไม่เกิน 5MB)
+                        </small>
+                    </div>
+
                     <!-- Submit -->
                     <div class="d-flex gap-2 mt-3 justify-center">
                         <button type="button" class="btn btn-info btn-lg" onclick="previewPettyCash()">
@@ -235,13 +245,38 @@
             try {
                 UI.showLoading('กำลังบันทึก...');
 
+                // Handle file upload if exists
+                let attachmentUrl = null;
+                const fileInput = document.getElementById('attachment');
+                if (fileInput && fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+
+                    // Check file size (5MB limit)
+                    if (file.size > 5 * 1024 * 1024) {
+                        UI.showToast('ไฟล์ขนาดใหญ่เกินไป (ไม่เกิน 5MB)', 'error');
+                        UI.hideLoading();
+                        return;
+                    }
+
+                    try {
+                        UI.showLoading('กำลังอัพโหลดไฟล์...');
+                        attachmentUrl = await DB.uploadFile(file, 'petty_cash');
+                    } catch (uploadErr) {
+                        console.error('File upload error:', uploadErr);
+                        UI.showToast('อัพโหลดไฟล์ไม่สำเร็จ: ' + uploadErr.message, 'error');
+                        UI.hideLoading();
+                        return;
+                    }
+                }
+
                 const data = {
                     department,
                     requester,
                     request_date: requestDate,
                     items,
                     total_amount: totalAmount,
-                    amount_text: amountText || null
+                    amount_text: amountText || null,
+                    attachment_url: attachmentUrl
                 };
 
                 const result = await DB.createPettyCash(data);

@@ -702,6 +702,19 @@ async function getPettyCashById(id) {
     return data;
 }
 
+async function getPettyCashByNumber(requestNo) {
+    const { data, error } = await db
+        .from('petty_cash_requests')
+        .select('*')
+        .eq('request_no', requestNo.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data;
+}
+
 async function getPettyCashByStatus(status, department = null) {
     let query = db
         .from('petty_cash_requests')
