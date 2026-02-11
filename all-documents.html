@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ดูเอกสารทั้งหมด | ระบบเอกสารออนไลน์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #1e293b;
+            background-image:
+                radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+                radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .doc-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(14, 165, 233, 0.3);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0.05));
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #0ea5e9;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4">
+
+    <!-- Header -->
+    <div class="max-w-7xl mx-auto mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-white">📊 ดูเอกสารทั้งหมด</h1>
+                    <p class="text-slate-400">รวมเอกสารทุกประเภทในที่เดียว</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="downloadCSV()"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i>
+                    ส่งออก CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="stat-card glass-card rounded-xl p-4">
+                <div class="text-slate-400 text-sm mb-1">ทั้งหมด</div>
+                <div id="statTotal" class="text-3xl font-bold text-white">-</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl p-4">
+                <div class="text-slate-400 text-sm mb-1">📦 PR</div>
+                <div id="statPR" class="text-3xl font-bold text-blue-400">-</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl p-4">
+                <div class="text-slate-400 text-sm mb-1">📝 Memo</div>
+                <div id="statMemo" class="text-3xl font-bold text-green-400">-</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl p-4">
+                <div class="text-slate-400 text-sm mb-1">💰 Petty Cash</div>
+                <div id="statPC" class="text-3xl font-bold text-yellow-400">-</div>
+            </div>
+            <div class="stat-card glass-card rounded-xl p-4">
+                <div class="text-slate-400 text-sm mb-1">📋 Asset Removal</div>
+                <div id="statAR" class="text-3xl font-bold text-purple-400">-</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card rounded-xl p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-slate-300 text-sm mb-2">ประเภทเอกสาร</label>
+                    <select id="filterType" onchange="applyFilters()"
+                        class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="pr">PR - ใบขอซื้อ</option>
+                        <option value="memo">Memo - บันทึกข้อความ</option>
+                        <option value="petty_cash">Petty Cash - เบิกเงินสดย่อย</option>
+                        <option value="asset_removal">Asset Removal - ขอย้ายสินทรัพย์</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-sm mb-2">แผนก</label>
+                    <select id="filterDepartment" onchange="applyFilters()"
+                        class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                        <option value="">ทุกแผนก</option>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-sm mb-2">สถานะ</label>
+                    <select id="filterStatus" onchange="applyFilters()"
+                        class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                        <option value="all">ทั้งหมด</option>
+                        <option value="pending_head">รออนุมัติหัวหน้า</option>
+                        <option value="pending_manager">รออนุมัติผู้บริหาร</option>
+                        <option value="processed">ดำเนินการแล้ว</option>
+                        <option value="approved">อนุมัติแล้ว</option>
+                        <option value="rejected">ตีกลับ</option>
+                        <option value="cancelled">ยกเลิก</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-sm mb-2">ค้นหา</label>
+                    <input type="text" id="searchInput" placeholder="เลขที่เอกสาร, ชื่อผู้ขอ..."
+                        class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500"
+                        onkeyup="debounceSearch()">
+                </div>
+                <div>
+                    <label class="block text-slate-300 text-sm mb-2">จำนวนแสดง</label>
+                    <select id="filterLimit" onchange="applyFilters()"
+                        class="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white">
+                        <option value="50">50 รายการ</option>
+                        <option value="100" selected>100 รายการ</option>
+                        <option value="200">200 รายการ</option>
+                        <option value="500">500 รายการ</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="glass-card rounded-xl p-4">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" style="border-collapse: separate; border-spacing: 0;">
+                    <thead>
+                        <tr class="text-slate-300 text-sm border-b border-slate-600">
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('type')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>ประเภท
+                            </th>
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('docNo')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>เลขที่เอกสาร
+                            </th>
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('date')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>วันที่สร้าง
+                            </th>
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('requester')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>ผู้ขอ/จาก
+                            </th>
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('department')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>แผนก
+                            </th>
+                            <th class="p-3 cursor-pointer hover:text-white" onclick="sortTable('status')">
+                                <i class="fa-solid fa-sort text-xs mr-1"></i>สถานะ
+                            </th>
+                            <th class="p-3">รายละเอียด</th>
+                            <th class="p-3 text-center">การดำเนินการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentsTableBody" class="text-white">
+                        <!-- Loading State -->
+                        <tr>
+                            <td colspan="8" class="text-center py-20">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="loader mb-4"></div>
+                                    <p class="text-slate-400">กำลังโหลดเอกสาร...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/db.js?v=20260211"></script>
+
+    <script>
+        let allDocuments = [];
+        let searchTimeout;
+        let sortColumn = 'date';
+        let sortDirection = 'desc';
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', async function () {
+            await loadDepartments();
+            await loadStatistics();
+            await loadDocuments();
+        });
+
+        async function loadDepartments() {
+            try {
+                const departments = await DB.getAllDepartments();
+                const select = document.getElementById('filterDepartment');
+
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.name;
+                    option.textContent = dept.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading departments:', error);
+            }
+        }
+
+        async function loadStatistics() {
+            try {
+                const stats = await DB.getDocumentsStatistics({});
+                document.getElementById('statTotal').textContent = stats.total.toLocaleString();
+                document.getElementById('statPR').textContent = stats.byType.pr.toLocaleString();
+                document.getElementById('statMemo').textContent = stats.byType.memo.toLocaleString();
+                document.getElementById('statPC').textContent = stats.byType.petty_cash.toLocaleString();
+                document.getElementById('statAR').textContent = stats.byType.asset_removal.toLocaleString();
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        async function loadDocuments() {
+            const tbody = document.getElementById('documentsTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-20"><div class="flex flex-col items-center justify-center"><div class="loader mb-4"></div><p class="text-slate-400">กำลังโหลดเอกสาร...</p></div></td></tr>';
+
+            try {
+                const departmentFilter = document.getElementById('filterDepartment').value;
+                const filters = {
+                    type: document.getElementById('filterType').value,
+                    status: document.getElementById('filterStatus').value,
+                    department: departmentFilter || null,
+                    searchTerm: document.getElementById('searchInput').value,
+                    limit: parseInt(document.getElementById('filterLimit').value)
+                };
+
+                allDocuments = await DB.getAllDocuments(filters);
+                renderDocuments();
+
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-20 text-red-400">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            }
+        }
+
+        function renderDocuments() {
+            const tbody = document.getElementById('documentsTableBody');
+
+            if (allDocuments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-20 text-slate-400">ไม่พบเอกสาร</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allDocuments.map(doc => createTableRow(doc)).join('');
+        }
+
+        function createTableRow(doc) {
+            const typeConfig = {
+                pr: { icon: '📦', color: 'blue', label: 'PR', viewUrl: 'view-pr.html' },
+                memo: { icon: '📝', color: 'green', label: 'Memo', viewUrl: 'view-memo.html' },
+                petty_cash: { icon: '💰', color: 'yellow', label: 'Petty Cash', viewUrl: 'view-petty-cash.html' },
+                asset_removal: { icon: '📋', color: 'purple', label: 'Asset Removal', viewUrl: 'view-asset-removal.html' }
+            };
+
+            const config = typeConfig[doc.doc_type] || typeConfig.pr;
+            const statusBadge = getStatusBadge(doc.status);
+
+            // Get document info
+            let docNo, requester, dept, detail;
+            if (doc.doc_type === 'pr') {
+                docNo = doc.pr_number;
+                requester = doc.requester;
+                dept = doc.department;
+                detail = `${doc.items?.length || 0} รายการ`;
+            } else if (doc.doc_type === 'memo') {
+                docNo = doc.memo_no;
+                requester = doc.from_dept;
+                dept = doc.to_dept || '-';
+                detail = doc.subject;
+            } else if (doc.doc_type === 'petty_cash') {
+                docNo = doc.request_no;
+                requester = doc.requester;
+                dept = doc.department;
+                detail = `${Number(doc.total_amount).toLocaleString()} บาท`;
+            } else if (doc.doc_type === 'asset_removal') {
+                docNo = doc.request_no;
+                requester = doc.requester;
+                dept = doc.department;
+                detail = `${doc.items?.length || 0} รายการ`;
+            }
+
+            const date = formatDate(doc.created_at);
+
+            return `
+                <tr class="border-b border-slate-700 hover:bg-slate-800/50 transition-colors cursor-pointer" 
+                    onclick="viewDocument('${config.viewUrl}', '${doc.id}')"
+                    data-type="${config.label}"
+                    data-docno="${docNo}"
+                    data-date="${doc.created_at}"
+                    data-requester="${requester}"
+                    data-department="${dept}"
+                    data-status="${doc.status}">
+                    <td class="p-3">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="text-lg">${config.icon}</span>
+                            <span class="text-${config.color}-400 font-medium">${config.label}</span>
+                        </span>
+                    </td>
+                    <td class="p-3">
+                        <span class="font-mono text-sm text-${config.color}-300">${docNo}</span>
+                    </td>
+                    <td class="p-3 text-slate-300">${date}</td>
+                    <td class="p-3 text-slate-300">${requester}</td>
+                    <td class="p-3 text-slate-300">${dept}</td>
+                    <td class="p-3">${statusBadge}</td>
+                    <td class="p-3 text-slate-400 text-sm">${detail}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="event.stopPropagation(); viewDocument('${config.viewUrl}', '${doc.id}')" 
+                                class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors">
+                            <i class="fa-solid fa-eye mr-1"></i>ดู
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function sortTable(column) {
+            // Toggle sort direction if same column
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            // Sort documents
+            allDocuments.sort((a, b) => {
+                let valA, valB;
+
+                switch (column) {
+                    case 'type':
+                        valA = a.doc_type;
+                        valB = b.doc_type;
+                        break;
+                    case 'docNo':
+                        valA = getDocNo(a);
+                        valB = getDocNo(b);
+                        break;
+                    case 'date':
+                        valA = new Date(a.created_at);
+                        valB = new Date(b.created_at);
+                        break;
+                    case 'requester':
+                        valA = getRequester(a);
+                        valB = getRequester(b);
+                        break;
+                    case 'department':
+                        valA = getDepartment(a);
+                        valB = getDepartment(b);
+                        break;
+                    case 'status':
+                        valA = a.status;
+                        valB = b.status;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderDocuments();
+        }
+
+        function getDocNo(doc) {
+            if (doc.doc_type === 'pr') return doc.pr_number;
+            if (doc.doc_type === 'memo') return doc.memo_no;
+            if (doc.doc_type === 'petty_cash') return doc.request_no;
+            if (doc.doc_type === 'asset_removal') return doc.request_no;
+            return '';
+        }
+
+        function getRequester(doc) {
+            if (doc.doc_type === 'pr') return doc.requester;
+            if (doc.doc_type === 'memo') return doc.from_dept;
+            if (doc.doc_type === 'petty_cash') return doc.requester;
+            if (doc.doc_type === 'asset_removal') return doc.requester;
+            return '';
+        }
+
+        function getDepartment(doc) {
+            if (doc.doc_type === 'pr') return doc.department;
+            if (doc.doc_type === 'memo') return doc.to_dept || '';
+            if (doc.doc_type === 'petty_cash') return doc.department;
+            if (doc.doc_type === 'asset_removal') return doc.department;
+            return '';
+        }
+
+        function getStatusBadge(status) {
+            const statusMap = {
+                pending_head: '<span class="px-2 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-300 whitespace-nowrap">รออนุมัติหัวหน้า</span>',
+                pending_manager: '<span class="px-2 py-1 text-xs rounded-full bg-orange-500/20 text-orange-300 whitespace-nowrap">รออนุมัติผู้บริหาร</span>',
+                processed: '<span class="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 whitespace-nowrap">ดำเนินการแล้ว</span>',
+                approved: '<span class="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 whitespace-nowrap">อนุมัติแล้ว</span>',
+                rejected: '<span class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-300 whitespace-nowrap">ตีกลับ</span>',
+                cancelled: '<span class="px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-300 whitespace-nowrap">ยกเลิก</span>'
+            };
+            return statusMap[status] || `<span class="px-2 py-1 text-xs rounded-full bg-slate-500/20 text-slate-300 whitespace-nowrap">${status}</span>`;
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return '-';
+            const date = new Date(isoString);
+            const th = new Date(date.getTime() + (7 * 3600000));
+            const day = String(th.getUTCDate()).padStart(2, '0');
+            const month = String(th.getUTCMonth() + 1).padStart(2, '0');
+            const year = th.getUTCFullYear() + 543;
+            return `${day}/${month}/${year}`;
+        }
+
+        function viewDocument(url, id) {
+            window.open(`${url}?id=${id}`, '_blank');
+        }
+
+        function applyFilters() {
+            loadDocuments();
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        }
+
+        async function downloadCSV() {
+            try {
+                const departmentFilter = document.getElementById('filterDepartment').value;
+                const filters = {
+                    type: document.getElementById('filterType').value,
+                    status: document.getElementById('filterStatus').value,
+                    department: departmentFilter || null,
+                    searchTerm: document.getElementById('searchInput').value,
+                    limit: 10000
+                };
+
+                const csv = await DB.exportAllDocumentsToCSV(filters);
+
+                if (!csv) {
+                    alert('ไม่มีข้อมูลให้ส่งออก');
+                    return;
+                }
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `all-documents-${new Date().getTime()}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                console.error('Error exporting CSV:', error);
+                alert('เกิดข้อผิดพลาดในการส่งออก CSV');
+            }
+        }
+
+        async function downloadPDF() {
+            try {
+                if (allDocuments.length === 0) {
+                    alert('ไม่มีเอกสารให้ส่งออก');
+                    return;
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4'); // portrait, A4
+
+                let isFirstPage = true;
+
+                for (const document of allDocuments) {
+                    if (!isFirstPage) {
+                        doc.addPage();
+                    }
+                    isFirstPage = false;
+
+                    // Draw document form based on type
+                    if (document.doc_type === 'pr') {
+                        drawPRForm(doc, document);
+                    } else if (document.doc_type === 'memo') {
+                        drawMemoForm(doc, document);
+                    } else if (document.doc_type === 'petty_cash') {
+                        drawPettyCashForm(doc, document);
+                    } else if (document.doc_type === 'asset_removal') {
+                        drawAssetRemovalForm(doc, document);
+                    }
+                }
+
+                // Save PDF
+                doc.save(`documents-export-${new Date().getTime()}.pdf`);
+
+            } catch (error) {
+                console.error('Error exporting PDF:', error);
+                alert('เกิดข้อผิดพลาดในการส่งออก PDF');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

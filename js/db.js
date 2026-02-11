@@ -6,6 +6,24 @@
 const db = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
 // ============================================
+// THAILAND TIMEZONE UTILITY
+// ============================================
+
+// Get current time in Thailand timezone (UTC+7) in ISO format
+function getThailandTime() {
+    const now = new Date();
+    const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    return thTime.toISOString();
+}
+
+// Get current month in Thailand timezone (YYYY-MM format)
+function getThailandMonth() {
+    const now = new Date();
+    const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+    return thTime.toISOString().slice(0, 7);
+}
+
+// ============================================
 // DEPARTMENTS
 // ============================================
 
@@ -222,7 +240,7 @@ async function approvePRByHead(id, items, approverDept) {
     const updates = {
         status: finalStatus,
         items: items,
-        head_approved_at: new Date().toISOString(),
+        head_approved_at: getThailandTime(),
         head_approved_by: approverDept
     };
 
@@ -239,7 +257,7 @@ async function approvePRByManager(id, items) {
     const updates = {
         status: finalStatus,
         items: items,
-        manager_approved_at: new Date().toISOString(),
+        manager_approved_at: getThailandTime(),
         manager_approved_by: 'ผู้บริหาร'
     };
 
@@ -258,7 +276,7 @@ async function rejectPR(id, reason, role) {
 async function cancelPR(id, reason) {
     const updates = {
         status: 'cancelled',
-        cancelled_at: new Date().toISOString(),
+        cancelled_at: getThailandTime(),
         cancel_reason: reason
     };
 
@@ -371,7 +389,7 @@ async function updateMemo(id, updates, action = 'UPDATE_MEMO') {
 async function approveMemoByHead(id, approverDept) {
     const updates = {
         status: 'pending_manager',
-        head_approved_at: new Date().toISOString()
+        head_approved_at: getThailandTime()
     };
 
     return await updateMemo(id, updates, 'APPROVE_MEMO_HEAD');
@@ -380,7 +398,7 @@ async function approveMemoByHead(id, approverDept) {
 async function approveMemoByManager(id) {
     const updates = {
         status: 'processed',
-        manager_approved_at: new Date().toISOString()
+        manager_approved_at: getThailandTime()
     };
 
     return await updateMemo(id, updates, 'APPROVE_MEMO_MANAGER');
@@ -545,7 +563,7 @@ async function getEmailJSAccounts() {
 }
 
 async function getActiveEmailJSAccounts() {
-    const currentMonth = new Date().toISOString().slice(0, 7); // "2026-01"
+    const currentMonth = getThailandMonth(); // "2026-01"
 
     const { data, error } = await db
         .from('emailjs_accounts')
@@ -569,7 +587,7 @@ async function getActiveEmailJSAccounts() {
 }
 
 async function addEmailJSAccount(accountData) {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getThailandMonth();
 
     const { data, error } = await db
         .from('emailjs_accounts')
@@ -605,7 +623,7 @@ async function deleteEmailJSAccount(id) {
 }
 
 async function incrementEmailUsage(accountId) {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getThailandMonth();
 
     // Get current account
     const { data: account } = await db
@@ -632,7 +650,7 @@ async function incrementEmailUsage(accountId) {
 }
 
 async function resetAccountUsage(accountId) {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getThailandMonth();
 
     await db
         .from('emailjs_accounts')
@@ -641,7 +659,7 @@ async function resetAccountUsage(accountId) {
 }
 
 async function resetAllAccountUsage() {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = getThailandMonth();
 
     await db
         .from('emailjs_accounts')
@@ -765,7 +783,7 @@ async function updatePettyCash(id, updates, action = 'UPDATE_PETTY_CASH') {
 async function approvePettyCashByHead(id, approverDept) {
     const updates = {
         status: 'pending_manager',
-        head_approved_at: new Date().toISOString(),
+        head_approved_at: getThailandTime(),
         head_approved_by: approverDept
     };
 
@@ -775,7 +793,7 @@ async function approvePettyCashByHead(id, approverDept) {
 async function approvePettyCashByManager(id) {
     const updates = {
         status: 'approved',
-        manager_approved_at: new Date().toISOString(),
+        manager_approved_at: getThailandTime(),
         manager_approved_by: 'ผู้บริหาร'
     };
 
@@ -958,7 +976,7 @@ async function updateAssetRemoval(id, updates, action = 'UPDATE_ASSET_REMOVAL') 
 async function approveAssetRemovalByHead(id, approverDept) {
     const updates = {
         status: 'pending_manager',
-        head_approved_at: new Date().toISOString(),
+        head_approved_at: getThailandTime(),
         head_approved_by: approverDept
     };
 
@@ -968,7 +986,7 @@ async function approveAssetRemovalByHead(id, approverDept) {
 async function approveAssetRemovalByManager(id) {
     const updates = {
         status: 'approved',
-        manager_approved_at: new Date().toISOString(),
+        manager_approved_at: getThailandTime(),
         manager_approved_by: 'ผู้บริหาร'
     };
 
@@ -1034,6 +1052,248 @@ async function exportAssetRemovalToCSV() {
         };
 
         csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_items}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}"\n`;
+    });
+
+    return csv;
+}
+
+// ============================================
+// ALL DOCUMENTS (Unified View)
+// ============================================
+
+async function getAllDocuments(filters = {}) {
+    const {
+        type = 'all', // 'all', 'pr', 'memo', 'petty_cash', 'asset_removal'
+        status = 'all',
+        department = null,
+        searchTerm = '',
+        startDate = null,
+        endDate = null,
+        limit = 100
+    } = filters;
+
+    let allDocs = [];
+
+    try {
+        // Fetch PRs
+        if (type === 'all' || type === 'pr') {
+            let prQuery = db.from('purchase_requests').select('*');
+
+            if (status !== 'all') prQuery = prQuery.eq('status', status);
+            if (department) prQuery = prQuery.eq('department', department);
+            if (searchTerm) {
+                prQuery = prQuery.or(`pr_number.ilike.%${searchTerm}%,requester.ilike.%${searchTerm}%`);
+            }
+            if (startDate) prQuery = prQuery.gte('created_at', startDate);
+            if (endDate) prQuery = prQuery.lte('created_at', endDate);
+
+            const { data: prs } = await prQuery.order('created_at', { ascending: false }).limit(limit);
+            if (prs) {
+                allDocs.push(...prs.map(doc => ({ ...doc, doc_type: 'pr' })));
+            }
+        }
+
+        // Fetch Memos
+        if (type === 'all' || type === 'memo') {
+            let memoQuery = db.from('memos').select('*');
+
+            if (status !== 'all') memoQuery = memoQuery.eq('status', status);
+            if (department) memoQuery = memoQuery.eq('from_dept', department);
+            if (searchTerm) {
+                memoQuery = memoQuery.or(`memo_no.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,from_dept.ilike.%${searchTerm}%`);
+            }
+            if (startDate) memoQuery = memoQuery.gte('created_at', startDate);
+            if (endDate) memoQuery = memoQuery.lte('created_at', endDate);
+
+            const { data: memos } = await memoQuery.order('created_at', { ascending: false }).limit(limit);
+            if (memos) {
+                allDocs.push(...memos.map(doc => ({ ...doc, doc_type: 'memo' })));
+            }
+        }
+
+        // Fetch Petty Cash
+        if (type === 'all' || type === 'petty_cash') {
+            let pcQuery = db.from('petty_cash_requests').select('*');
+
+            if (status !== 'all') pcQuery = pcQuery.eq('status', status);
+            if (department) pcQuery = pcQuery.eq('department', department);
+            if (searchTerm) {
+                pcQuery = pcQuery.or(`request_no.ilike.%${searchTerm}%,requester.ilike.%${searchTerm}%`);
+            }
+            if (startDate) pcQuery = pcQuery.gte('created_at', startDate);
+            if (endDate) pcQuery = pcQuery.lte('created_at', endDate);
+
+            const { data: pcs } = await pcQuery.order('created_at', { ascending: false }).limit(limit);
+            if (pcs) {
+                allDocs.push(...pcs.map(doc => ({ ...doc, doc_type: 'petty_cash' })));
+            }
+        }
+
+        // Fetch Asset Removals
+        if (type === 'all' || type === 'asset_removal') {
+            let arQuery = db.from('asset_removal_requests').select('*');
+
+            if (status !== 'all') arQuery = arQuery.eq('status', status);
+            if (department) arQuery = arQuery.eq('department', department);
+            if (searchTerm) {
+                arQuery = arQuery.or(`request_no.ilike.%${searchTerm}%,requester.ilike.%${searchTerm}%`);
+            }
+            if (startDate) arQuery = arQuery.gte('created_at', startDate);
+            if (endDate) arQuery = arQuery.lte('created_at', endDate);
+
+            const { data: ars } = await arQuery.order('created_at', { ascending: false }).limit(limit);
+            if (ars) {
+                allDocs.push(...ars.map(doc => ({ ...doc, doc_type: 'asset_removal' })));
+            }
+        }
+
+        // Sort all documents by created_at descending
+        allDocs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        return allDocs;
+
+    } catch (error) {
+        console.error('Error fetching all documents:', error);
+        throw error;
+    }
+}
+
+async function getDocumentsStatistics(filters = {}) {
+    const { startDate = null, endDate = null, department = null } = filters;
+
+    const stats = {
+        total: 0,
+        byType: { pr: 0, memo: 0, petty_cash: 0, asset_removal: 0 },
+        byStatus: {
+            pending_head: 0,
+            pending_manager: 0,
+            processed: 0,
+            approved: 0,
+            rejected: 0,
+            cancelled: 0
+        },
+        byDepartment: {}
+    };
+
+    try {
+        // PR Stats
+        let prQuery = db.from('purchase_requests').select('status, department', { count: 'exact' });
+        if (department) prQuery = prQuery.eq('department', department);
+        if (startDate) prQuery = prQuery.gte('created_at', startDate);
+        if (endDate) prQuery = prQuery.lte('created_at', endDate);
+        const { data: prs, count: prCount } = await prQuery;
+        stats.byType.pr = prCount || 0;
+        stats.total += prCount || 0;
+        if (prs) {
+            prs.forEach(doc => {
+                stats.byStatus[doc.status] = (stats.byStatus[doc.status] || 0) + 1;
+                stats.byDepartment[doc.department] = (stats.byDepartment[doc.department] || 0) + 1;
+            });
+        }
+
+        // Memo Stats
+        let memoQuery = db.from('memos').select('status, from_dept', { count: 'exact' });
+        if (department) memoQuery = memoQuery.eq('from_dept', department);
+        if (startDate) memoQuery = memoQuery.gte('created_at', startDate);
+        if (endDate) memoQuery = memoQuery.lte('created_at', endDate);
+        const { data: memos, count: memoCount } = await memoQuery;
+        stats.byType.memo = memoCount || 0;
+        stats.total += memoCount || 0;
+        if (memos) {
+            memos.forEach(doc => {
+                stats.byStatus[doc.status] = (stats.byStatus[doc.status] || 0) + 1;
+                stats.byDepartment[doc.from_dept] = (stats.byDepartment[doc.from_dept] || 0) + 1;
+            });
+        }
+
+        // Petty Cash Stats
+        let pcQuery = db.from('petty_cash_requests').select('status, department', { count: 'exact' });
+        if (department) pcQuery = pcQuery.eq('department', department);
+        if (startDate) pcQuery = pcQuery.gte('created_at', startDate);
+        if (endDate) pcQuery = pcQuery.lte('created_at', endDate);
+        const { data: pcs, count: pcCount } = await pcQuery;
+        stats.byType.petty_cash = pcCount || 0;
+        stats.total += pcCount || 0;
+        if (pcs) {
+            pcs.forEach(doc => {
+                stats.byStatus[doc.status] = (stats.byStatus[doc.status] || 0) + 1;
+                stats.byDepartment[doc.department] = (stats.byDepartment[doc.department] || 0) + 1;
+            });
+        }
+
+        // Asset Removal Stats
+        let arQuery = db.from('asset_removal_requests').select('status, department', { count: 'exact' });
+        if (department) arQuery = arQuery.eq('department', department);
+        if (startDate) arQuery = arQuery.gte('created_at', startDate);
+        if (endDate) arQuery = arQuery.lte('created_at', endDate);
+        const { data: ars, count: arCount } = await arQuery;
+        stats.byType.asset_removal = arCount || 0;
+        stats.total += arCount || 0;
+        if (ars) {
+            ars.forEach(doc => {
+                stats.byStatus[doc.status] = (stats.byStatus[doc.status] || 0) + 1;
+                stats.byDepartment[doc.department] = (stats.byDepartment[doc.department] || 0) + 1;
+            });
+        }
+
+        return stats;
+
+    } catch (error) {
+        console.error('Error getting document statistics:', error);
+        throw error;
+    }
+}
+
+async function getDocumentsByDateRange(startDate, endDate, filters = {}) {
+    return await getAllDocuments({ ...filters, startDate, endDate });
+}
+
+async function exportAllDocumentsToCSV(filters = {}) {
+    const docs = await getAllDocuments({ ...filters, limit: 10000 });
+
+    if (!docs.length) return null;
+
+    let csv = '\uFEFF'; // BOM for Thai
+    csv += 'ประเภท,เลขที่เอกสาร,วันที่สร้าง,ผู้ขอ/จาก,แผนก,สถานะ,รายละเอียด\n';
+
+    const formatD = (iso) => {
+        if (!iso) return '-';
+        const date = new Date(iso);
+        const th = new Date(date.getTime() + (7 * 3600000));
+        return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+    };
+
+    docs.forEach(doc => {
+        let type, docNo, requester, dept, detail;
+
+        if (doc.doc_type === 'pr') {
+            type = 'PR';
+            docNo = doc.pr_number;
+            requester = doc.requester;
+            dept = doc.department;
+            detail = `${doc.items?.length || 0} รายการ`;
+        } else if (doc.doc_type === 'memo') {
+            type = 'Memo';
+            docNo = doc.memo_no;
+            requester = doc.from_dept;
+            dept = doc.to_dept || '-';
+            detail = doc.subject;
+        } else if (doc.doc_type === 'petty_cash') {
+            type = 'Petty Cash';
+            docNo = doc.request_no;
+            requester = doc.requester;
+            dept = doc.department;
+            detail = `${Number(doc.total_amount).toLocaleString()} บาท`;
+        } else if (doc.doc_type === 'asset_removal') {
+            type = 'Asset Removal';
+            docNo = doc.request_no;
+            requester = doc.requester;
+            dept = doc.department;
+            detail = `${doc.items?.length || 0} รายการ`;
+        }
+
+        const date = formatD(doc.created_at);
+        csv += `"${type}","${docNo}","${date}","${requester}","${dept}","${doc.status}","${detail}"\n`;
     });
 
     return csv;
@@ -1112,6 +1372,12 @@ window.DB = {
     rejectAssetRemoval,
     cancelAssetRemoval,
     countPendingAssetRemoval,
-    exportAssetRemovalToCSV
+    exportAssetRemovalToCSV,
+    // All Documents (New Functions)
+    getAllDocuments,
+    getDocumentsStatistics,
+    getDocumentsByDateRange,
+    exportAllDocumentsToCSV,
+    getPettyCashByNumber
 };
 

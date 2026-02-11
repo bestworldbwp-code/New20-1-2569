@@ -128,6 +128,9 @@
                 document.getElementById('companyLogo').src = LOGO_BASE64;
             }
 
+            // Set default required date to today (Thailand time)
+            document.getElementById('required_date').value = UI.getTodayDate();
+
             // ป้องกันการกด Enter ส่งฟอร์ม
             document.getElementById('prForm').addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
