@@ -394,15 +394,12 @@ async function sendEmail(toEmail, subject, htmlContent) {
 
         console.log(`📧 Sending email via: ${account.name} (${account.usage_count || 0}/${account.quota_limit || 200})`);
 
-        // Init EmailJS with selected account's public key
-        initEmailJSAccount(account.public_key);
-
-        // Send email
+        // Send email with public_key passed directly (supports multi-account switching)
         await emailjs.send(account.service_id, account.template_id, {
             to_email: toEmail,
             subject: subject,
             html_content: htmlContent
-        });
+        }, account.public_key);
 
         // Increment usage counter
         if (account.id) {
@@ -438,13 +435,11 @@ async function sendEmailFallback(toEmail, subject, htmlContent) {
             try {
                 console.log(`🔄 Fallback: Trying ${account.name}...`);
 
-                initEmailJSAccount(account.public_key);
-
                 await emailjs.send(account.service_id, account.template_id, {
                     to_email: toEmail,
                     subject: subject,
                     html_content: htmlContent
-                });
+                }, account.public_key);
 
                 if (account.id) {
                     await DB.incrementEmailUsage(account.id);
