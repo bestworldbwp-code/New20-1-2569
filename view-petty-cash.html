@@ -360,92 +360,93 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
-            // Get ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            let id = urlParams.get('id');
-            const isPreview = urlParams.get('preview') === 'true';
+            try {
+                // Get ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                let id = urlParams.get('id');
+                const isPreview = urlParams.get('preview') === 'true';
 
-            // Handle Preview Mode
-            if (isPreview) {
-                const previewData = sessionStorage.getItem('petty_cash_preview_data');
-                if (!previewData) {
-                    document.body.innerHTML = '<p style="text-align: center; padding: 40px;">ไม่พบข้อมูลตัวอย่าง</p>';
-                    return;
+                // Handle Preview Mode
+                if (isPreview) {
+                    const previewData = sessionStorage.getItem('petty_cash_preview_data');
+                    if (!previewData) {
+                        document.body.innerHTML = '<p style="text-align: center; padding: 40px;">ไม่พบข้อมูลตัวอย่าง</p>';
+                        return;
+                    }
+
+                    const pc = JSON.parse(previewData);
+                    document.title = '(Preview) ' + document.title;
+
+                    // Add Ribbon
+                    const ribbon = document.createElement('div');
+                    ribbon.className = 'no-print';
+                    ribbon.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 5px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); pointer-events: none; z-index: 2000; text-align: center; width: max-content;';
+                    ribbon.innerHTML = '⚠️ โหมดตัวอย่าง (Preview Native)';
+                    document.body.appendChild(ribbon);
+
+                    // Hide status banner or set to preview
+                    const statusBanner = document.getElementById('statusBanner');
+                    if (statusBanner) {
+                        statusBanner.textContent = '⚠️ ตัวอย่างเอกสาร (ยังไม่ได้บันทึก)';
+                        statusBanner.className = 'status-banner no-print';
+                        statusBanner.style.background = '#fff3cd';
+                        statusBanner.style.color = '#856404';
+                    }
+
+                    // Render Data directly
+                    renderPettyCashData(pc);
+                    return; // Stop execution here for preview
                 }
 
-                const pc = JSON.parse(previewData);
-                document.title = '(Preview) ' + document.title;
+                console.log('[DEBUG] Document ID from URL:', id);
 
-                // Add Ribbon
-                const ribbon = document.createElement('div');
-                ribbon.className = 'no-print';
-                ribbon.style.cssText = 'position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 5px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.2); pointer-events: none; z-index: 2000; text-align: center; width: max-content;';
-                ribbon.innerHTML = '⚠️ โหมดตัวอย่าง (Preview Native)';
-                document.body.appendChild(ribbon);
-
-                // Hide status banner or set to preview
-                const statusBanner = document.getElementById('statusBanner');
-                if (statusBanner) {
-                    statusBanner.textContent = '⚠️ ตัวอย่างเอกสาร (ยังไม่ได้บันทึก)';
-                    statusBanner.className = 'status-banner no-print';
-                    statusBanner.style.background = '#fff3cd';
-                    statusBanner.style.color = '#856404';
+                // Handle "undefined" string
+                if (id === 'undefined') {
+                    console.warn('[DEBUG] ID is "undefined" string, treating as null');
+                    id = null;
                 }
 
-                // Render Data directly
-                renderPettyCashData(pc);
-                return; // Stop execution here for preview
-            }
-
-            console.log('[DEBUG] Document ID from URL:', id);
-
-            // Handle "undefined" string
-            if (id === 'undefined') {
-                console.warn('[DEBUG] ID is "undefined" string, treating as null');
-                id = null;
-            }
-
-            // Fallback: If URL has no ID, check LocalStorage
-            if (!id) {
-                console.log('[DEBUG] ID not in URL, checking LocalStorage...');
-                const storedId = localStorage.getItem('petty_cash_debug_id');
-                if (storedId) {
-                    console.info('[DEBUG] Recovered ID from LocalStorage:', storedId);
-                    id = storedId;
-                    // Optional: update URL to match
-                    try {
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.set('id', id);
-                        window.history.replaceState({}, '', newUrl);
-                    } catch (e) {
-                        console.warn('Could not update URL state:', e);
+                // Fallback: If URL has no ID, check LocalStorage
+                if (!id) {
+                    console.log('[DEBUG] ID not in URL, checking LocalStorage...');
+                    const storedId = localStorage.getItem('petty_cash_debug_id');
+                    if (storedId) {
+                        console.info('[DEBUG] Recovered ID from LocalStorage:', storedId);
+                        id = storedId;
+                        // Optional: update URL to match
+                        try {
+                            const newUrl = new URL(window.location.href);
+                            newUrl.searchParams.set('id', id);
+                            window.history.replaceState({}, '', newUrl);
+                        } catch (e) {
+                            console.warn('Could not update URL state:', e);
+                        }
                     }
                 }
-            }
 
-            // Show Debug ID & URL
-            const debugIdEl = document.getElementById('debugId');
-            const debugUrlEl = document.getElementById('debugUrl');
+                // Show Debug ID & URL
+                const debugIdEl = document.getElementById('debugId');
+                const debugUrlEl = document.getElementById('debugUrl');
 
-            if (debugIdEl) debugIdEl.textContent = id || 'NULL';
-            if (debugUrlEl) debugUrlEl.textContent = window.location.href;
+                if (debugIdEl) debugIdEl.textContent = id || 'NULL';
+                if (debugUrlEl) debugUrlEl.textContent = window.location.href;
 
-            if (!id) {
-                const statusBanner = document.getElementById('statusBanner');
-                if (statusBanner) {
-                    statusBanner.textContent = '⚠️ ไม่พบ ID เอกสาร (URL Parameter Missing)';
-                    statusBanner.className = 'status-banner no-print rejected';
-                }
-                UI.showToast('ไม่พบ ID เอกสาร', 'error');
+                if (!id) {
+                    const statusBanner = document.getElementById('statusBanner');
+                    if (statusBanner) {
+                        statusBanner.textContent = '⚠️ ไม่พบ ID เอกสาร (URL Parameter Missing)';
+                        statusBanner.className = 'status-banner no-print rejected';
+                    }
+                    UI.showToast('ไม่พบ ID เอกสาร', 'error');
 
-                // Show debug info for user
-                const debugDiv = document.createElement('div');
-                debugDiv.className = 'no-print';
-                debugDiv.style.padding = '20px';
-                debugDiv.style.marginTop = '20px';
-                debugDiv.style.background = '#fdeef4';
-                debugDiv.style.border = '1px solid #f8d7da';
-                debugDiv.innerHTML = `
+                    // Show debug info for user
+                    const debugDiv = document.createElement('div');
+                    debugDiv.className = 'no-print';
+                    debugDiv.style.padding = '20px';
+                    debugDiv.style.marginTop = '20px';
+                    debugDiv.style.background = '#fdeef4';
+                    debugDiv.style.border = '1px solid #f8d7da';
+                    debugDiv.innerHTML = `
                     <div style="color: #721c24; font-weight: bold; margin-bottom: 10px;">🔍 ข้อมูลสำหรับแก้ไข (Debug Info):</div>
                     <ul style="color: #721c24; font-size: 0.9rem;">
                         <li><b>URL ปัจจุบัน:</b> ${window.location.href}</li>
@@ -453,52 +454,52 @@
                         <li><b>คำแนะนำ:</b> ลองกลับไปที่หน้าหลักแล้วกดเข้ามาใหม่ หรือเช็คจากหน้า Admin ครับ</li>
                     </ul>
                 `;
+                    document.body.appendChild(debugDiv);
+                    return;
+                }
+
+                // Check if DB is loaded
+                if (typeof DB === 'undefined' || !DB.getPettyCashById) {
+                    throw new Error('Database Module (js/db.js) failed to load. Please check if Supabase is blocked or Config is wrong.');
+                }
+
+                // Load petty cash data with timeout protection
+                console.log('[DEBUG] Fetching data for ID:', id);
+
+                const fetchPromise = DB.getPettyCashById(id);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('การเรียกข้อมูลใช้เวลานานเกินไป (Request Timeout)')), 8000)
+                );
+
+                const pc = await Promise.race([fetchPromise, timeoutPromise]);
+                console.log('[DEBUG] Received data:', pc);
+
+                if (!pc) {
+                    UI.showToast('ไม่พบเอกสาร', 'error');
+                    return;
+                }
+
+                renderPettyCashData(pc);
+
+            } catch (err) {
+                console.error('Error loading petty cash:', err);
+                const statusBanner = document.getElementById('statusBanner');
+                if (statusBanner) {
+                    statusBanner.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+                    statusBanner.className = 'status-banner no-print rejected';
+                }
+                UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+
+                // Debug info
+                const debugDiv = document.createElement('div');
+                debugDiv.className = 'no-print';
+                debugDiv.style.padding = '20px';
+                debugDiv.style.marginTop = '20px';
+                debugDiv.style.background = '#000';
+                debugDiv.style.color = '#fff';
+                debugDiv.innerHTML = `<pre>Debug Info:\nID: ${id}\nError: ${err.message}\nStack: ${err.stack}</pre>`;
                 document.body.appendChild(debugDiv);
-                return;
             }
-
-            // Check if DB is loaded
-            if (typeof DB === 'undefined' || !DB.getPettyCashById) {
-                throw new Error('Database Module (js/db.js) failed to load. Please check if Supabase is blocked or Config is wrong.');
-            }
-
-            // Load petty cash data with timeout protection
-            console.log('[DEBUG] Fetching data for ID:', id);
-
-            const fetchPromise = DB.getPettyCashById(id);
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('การเรียกข้อมูลใช้เวลานานเกินไป (Request Timeout)')), 8000)
-            );
-
-            const pc = await Promise.race([fetchPromise, timeoutPromise]);
-            console.log('[DEBUG] Received data:', pc);
-
-            if (!pc) {
-                UI.showToast('ไม่พบเอกสาร', 'error');
-                return;
-            }
-
-            renderPettyCashData(pc);
-
-        } catch (err) {
-            console.error('Error loading petty cash:', err);
-            const statusBanner = document.getElementById('statusBanner');
-            if (statusBanner) {
-                statusBanner.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-                statusBanner.className = 'status-banner no-print rejected';
-            }
-            UI.showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
-
-            // Debug info
-            const debugDiv = document.createElement('div');
-            debugDiv.className = 'no-print';
-            debugDiv.style.padding = '20px';
-            debugDiv.style.marginTop = '20px';
-            debugDiv.style.background = '#000';
-            debugDiv.style.color = '#fff';
-            debugDiv.innerHTML = `<pre>Debug Info:\nID: ${id}\nError: ${err.message}\nStack: ${err.stack}</pre>`;
-            document.body.appendChild(debugDiv);
-        }
         });
 
         function renderPettyCashData(pc) {
