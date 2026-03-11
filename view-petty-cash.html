@@ -345,7 +345,7 @@
                 <div class="title">ผู้รับเงิน</div>
                 <div class="line">
                     <div class="name" id="requesterName">........................</div>
-                    <div class="date">วันที่ ....../....../......</div>
+                    <div class="date" id="requesterDate">วันที่ ....../....../......</div>
                 </div>
             </div>
         </div>
@@ -507,7 +507,13 @@
             document.getElementById('requestNo').textContent = pc.request_no;
             document.getElementById('department').textContent = pc.department;
             document.getElementById('requestDate').textContent = UI.formatDate(pc.request_date);
-            // document.getElementById('requesterName').textContent = pc.requester; // User requested to leave blank for manual sign
+            
+            // Requester
+            const requesterElem = document.getElementById('requesterName');
+            const requesterDateElem = document.getElementById('requesterDate');
+            if(requesterElem) requesterElem.innerHTML = `( <span style="color: #4361ee; font-weight: 600;">${pc.requester}</span> )`;
+            if(requesterDateElem) requesterDateElem.textContent = 'วันที่ ' + UI.formatDate(pc.request_date);
+
             document.getElementById('totalAmount').textContent = Number(pc.total_amount).toLocaleString('th-TH', {
                 minimumFractionDigits: 2
             });
@@ -555,16 +561,16 @@
 
             // Head approval
             if (pc.head_approved_by) {
-                document.getElementById('headApprovedBy').textContent = pc.head_approved_by;
+                document.getElementById('headApprovedBy').innerHTML = `( ผจก.ฝ่าย ${pc.department} )<br><span style="color: #10b981; font-size: 8px;">อนุมัติออนไลน์</span>`;
                 document.getElementById('headApprovedDate').textContent =
-                    'วันที่ ' + UI.formatDate(pc.head_approved_at);
+                    'วันที่ ' + UI.formatDateTime(pc.head_approved_at);
             }
 
             // Manager approval
             if (pc.manager_approved_by) {
-                document.getElementById('managerApprovedBy').textContent = pc.manager_approved_by;
+                document.getElementById('managerApprovedBy').innerHTML = `( คุณเบญจมาศ ถิ่นจันทร์ )<br><span style="color: #10b981; font-size: 8px;">อนุมัติออนไลน์</span>`;
                 document.getElementById('managerApprovedDate').textContent =
-                    'วันที่ ' + UI.formatDate(pc.manager_approved_at);
+                    'วันที่ ' + UI.formatDateTime(pc.manager_approved_at);
             }
 
             // Show attachment if exists
