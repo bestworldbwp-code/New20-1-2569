@@ -98,9 +98,9 @@
             </div>
             <div class="flex gap-2">
                 <button onclick="downloadCSV()"
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i>
-                    ส่งออก CSV
+                    class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-file-excel"></i>
+                    ส่งออก Excel
                 </button>
             </div>
         </div>
@@ -509,13 +509,16 @@
 
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `all-documents-${new Date().getTime()}.csv`);
-                link.style.visibility = 'hidden';
+                const url = window.URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `Report_${new Date().getTime()}.xls`;
+                link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
             } catch (error) {
                 console.error('Error exporting CSV:', error);
                 alert('เกิดข้อผิดพลาดในการส่งออก CSV');

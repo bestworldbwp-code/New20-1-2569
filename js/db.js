@@ -496,10 +496,9 @@ async function exportPRToCSV() {
     if (!data.length) return null;
 
     let csv = '\uFEFF'; // BOM for Thai
-    csv += 'วันที่ขอ,เลขที่ PR,ผู้ขอซื้อ,แผนก,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
+    csv += 'วันที่ขอ,เลขที่ PR,ผู้ขอซื้อ,แผนก,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร,รายการสินค้า\n';
 
     data.forEach(row => {
-        // Use UI helpers for consistency if available, otherwise manual offset
         const formatD = (iso) => {
             if (!iso) return '-';
             const date = new Date(iso);
@@ -510,14 +509,20 @@ async function exportPRToCSV() {
             if (!iso) return '-';
             const date = new Date(iso);
             const th = new Date(date.getTime() + (7 * 3600000));
-            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}:${String(th.getUTCSeconds()).padStart(2, '0')}`;
+            return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
+        };
+
+        const getItemsText = (items) => {
+            if (!items || !Array.isArray(items)) return '-';
+            return items.map(it => `${it.description || ''} (${it.quantity || ''} ${it.unit || ''})`).join(' | ');
         };
 
         const createdAt = formatD(row.created_at);
         const headApproved = formatDT(row.head_approved_at);
         const managerApproved = formatDT(row.manager_approved_at);
+        const itemsDetail = getItemsText(row.items).replace(/"/g, "'");
 
-        csv += `${createdAt},"${row.pr_number}","${row.requester}","${row.department}","${row.status}","${headApproved}","${managerApproved}"\n`;
+        csv += `${createdAt},"${row.pr_number}","${row.requester}","${row.department}","${row.status}","${headApproved}","${managerApproved}","${itemsDetail}"\n`;
     });
 
     return csv;
@@ -533,7 +538,14 @@ async function exportMemoToCSV() {
     if (!data.length) return null;
 
     let csv = '\uFEFF';
-    csv += 'วันที่,เลขที่ Memo,จาก,ถึง,เรื่อง,สถานะ\n';
+    csv += 'วันที่,เลขที่ Memo,จาก,ถึง,เรื่อง,สถานะ,วันที่อนุมัติ (ผจก.),วันที่อนุมัติ (ผู้บริหาร)\n';
+
+    const formatDT = (iso) => {
+        if (!iso) return '-';
+        const date = new Date(iso);
+        const th = new Date(date.getTime() + (7 * 3600000));
+        return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
+    };
 
     data.forEach(row => {
         const dateObj = row.date ? new Date(row.date) : null;
@@ -542,7 +554,11 @@ async function exportMemoToCSV() {
             const th = new Date(dateObj.getTime() + (7 * 3600000));
             dateStr = `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
         }
-        csv += `${dateStr},"${row.memo_no}","${row.from_dept}","${row.to_dept || '-'}","${row.subject}","${row.status}"\n`;
+        
+        const headApprove = formatDT(row.head_approved_at);
+        const managerApprove = formatDT(row.manager_approved_at);
+
+        csv += `${dateStr},"${row.memo_no}","${row.from_dept}","${row.to_dept || '-'}","${row.subject}","${row.status}","${headApprove}","${managerApprove}"\n`;
     });
 
     return csv;
@@ -842,7 +858,7 @@ async function exportPettyCashToCSV() {
     if (!data.length) return null;
 
     let csv = '\uFEFF'; // BOM for Thai
-    csv += 'วันที่ขอ,เลขที่,ผู้ขอเบิก,แผนก,จำนวนเงิน,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
+    csv += 'วันที่ขอ,เลขที่,ผู้ขอเบิก,แผนก,จำนวนเงิน,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร,รายการเบิก\n';
 
     data.forEach(row => {
         const formatD = (iso) => {
@@ -858,7 +874,14 @@ async function exportPettyCashToCSV() {
             return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
         };
 
-        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_amount}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}"\n`;
+        const getItemsText = (items) => {
+            if (!items || !Array.isArray(items)) return '-';
+            return items.map(it => `${it.detail || ''} (${Number(it.amount).toLocaleString()} บาท)`).join(' | ');
+        };
+
+        const itemsDetail = getItemsText(row.items).replace(/"/g, "'");
+
+        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_amount}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}","${itemsDetail}"\n`;
     });
 
     return csv;
@@ -1035,7 +1058,7 @@ async function exportAssetRemovalToCSV() {
     if (!data.length) return null;
 
     let csv = '\uFEFF'; // BOM for Thai
-    csv += 'วันที่ขอ,เลขที่,ผู้ขอ,แผนก,จำนวนรายการ,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร\n';
+    csv += 'วันที่ขอ,เลขที่,ผู้ขอ,แผนก,จำนวนรายการ,สถานะ,อนุมัติโดยแผนก,อนุมัติโดยผู้บริหาร,รายการทรัพย์สิน\n';
 
     data.forEach(row => {
         const formatD = (iso) => {
@@ -1051,7 +1074,15 @@ async function exportAssetRemovalToCSV() {
             return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543} ${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
         };
 
-        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_items}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}"\n`;
+        const getItemsText = (items) => {
+            const list = items?.list || items;
+            if (!list || !Array.isArray(list)) return '-';
+            return list.map(it => `${it.asset_name || ''} (${it.quantity || ''} ${it.unit || ''})`).join(' | ');
+        };
+
+        const itemsDetail = getItemsText(row.items).replace(/"/g, "'");
+
+        csv += `${formatD(row.request_date)},"${row.request_no}","${row.requester}","${row.department}","${row.total_items}","${row.status}","${formatDT(row.head_approved_at)}","${formatDT(row.manager_approved_at)}","${itemsDetail}"\n`;
     });
 
     return csv;
@@ -1254,7 +1285,7 @@ async function exportAllDocumentsToCSV(filters = {}) {
     if (!docs.length) return null;
 
     let csv = '\uFEFF'; // BOM for Thai
-    csv += 'ประเภท,เลขที่เอกสาร,วันที่สร้าง,ผู้ขอ/จาก,แผนก,สถานะ,รายละเอียด\n';
+    csv += 'ประเภท,เลขที่เอกสาร,วันที่สร้าง,ผู้ขอ/จาก,แผนก,สถานะ,วันที่อนุมัติ (ผจก.),วันที่อนุมัติ (ผู้บริหาร),รายการสินค้า/รายละเอียด\n';
 
     const formatD = (iso) => {
         if (!iso) return '-';
@@ -1263,15 +1294,36 @@ async function exportAllDocumentsToCSV(filters = {}) {
         return `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
     };
 
+    const formatDT = (iso) => {
+        if (!iso) return '-';
+        const date = new Date(iso);
+        const th = new Date(date.getTime() + (7 * 3600000));
+        const d = `${String(th.getUTCDate()).padStart(2, '0')}/${String(th.getUTCMonth() + 1).padStart(2, '0')}/${th.getUTCFullYear() + 543}`;
+        const t = `${String(th.getUTCHours()).padStart(2, '0')}:${String(th.getUTCMinutes()).padStart(2, '0')}`;
+        return `${d} ${t}`;
+    };
+
+    const getItemsText = (items) => {
+        if (!items || !Array.isArray(items)) return '-';
+        return items.map(it => {
+            const name = it.description || it.detail || it.asset_name || '';
+            const qty = it.quantity || it.amount || '';
+            const unit = it.unit || (it.amount ? 'บาท' : '');
+            return `${name}${qty ? ' (' + qty + ' ' + unit + ')' : ''}`;
+        }).join(' | ');
+    };
+
     docs.forEach(doc => {
         let type, docNo, requester, dept, detail;
+        let headApprove = formatDT(doc.head_approved_at);
+        let managerApprove = formatDT(doc.manager_approved_at);
 
         if (doc.doc_type === 'pr') {
             type = 'PR';
             docNo = doc.pr_number;
             requester = doc.requester;
             dept = doc.department;
-            detail = `${doc.items?.length || 0} รายการ`;
+            detail = getItemsText(doc.items);
         } else if (doc.doc_type === 'memo') {
             type = 'Memo';
             docNo = doc.memo_no;
@@ -1283,17 +1335,23 @@ async function exportAllDocumentsToCSV(filters = {}) {
             docNo = doc.request_no;
             requester = doc.requester;
             dept = doc.department;
-            detail = `${Number(doc.total_amount).toLocaleString()} บาท`;
+            detail = `[รวม ${Number(doc.total_amount).toLocaleString()} บาท] | ` + getItemsText(doc.items);
         } else if (doc.doc_type === 'asset_removal') {
             type = 'Asset Removal';
             docNo = doc.request_no;
             requester = doc.requester;
             dept = doc.department;
-            detail = `${doc.items?.length || 0} รายการ`;
+            
+            // Asset Removal might have nested items in 'list' property based on my previous analysis
+            const arItems = doc.items?.list || doc.items; 
+            detail = getItemsText(arItems);
         }
 
         const date = formatD(doc.created_at);
-        csv += `"${type}","${docNo}","${date}","${requester}","${dept}","${doc.status}","${detail}"\n`;
+        // Replace double quotes with single quotes to avoid CSV breaking
+        const cleanDetail = detail ? detail.replace(/"/g, "'") : '-';
+        
+        csv += `"${type}","${docNo}","${date}","${requester}","${dept}","${doc.status}","${headApprove}","${managerApprove}","${cleanDetail}"\n`;
     });
 
     return csv;

@@ -253,15 +253,20 @@ function getActionLabel(action) {
 // ============================================
 
 function downloadCSV(content, filename) {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    // Force use Data URL for file:// protocol compatibility
+    const excelFilename = filename.replace('.csv', '.xls');
+    const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(content);
+    
     const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', excelFilename);
+    
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    
+    setTimeout(() => {
+        document.body.removeChild(link);
+    }, 100);
 }
 
 // ============================================
