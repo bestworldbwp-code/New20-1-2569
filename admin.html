@@ -429,7 +429,7 @@
                     reasonHtml = item.remark || '-';
                 } else {
                     if (showQtyEdit) {
-                        qtyHtml = `<input type="number" class="form-control" id="qty-${realIdx}" value="${item.quantity}" style="width: 80px;">`;
+                        qtyHtml = `<input type="number" class="form-control" id="qty-${realIdx}" value="${item.quantity}" style="width: 110px; min-width: 110px; text-align: center;">`;
                     }
                     actionHtml = `
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
