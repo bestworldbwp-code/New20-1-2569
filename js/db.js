@@ -9,14 +9,16 @@ const db = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 // THAILAND TIMEZONE UTILITY
 // ============================================
 
-// Get current time in Thailand timezone (UTC+7) in ISO format
+// Timestamp ปัจจุบันสำหรับบันทึกลง DB
+// คอลัมน์ *_approved_at เป็น TIMESTAMP WITH TIME ZONE ซึ่ง Postgres เก็บค่าเป็น UTC เสมอ
+// ห้ามบวก +7 ชม. ที่นี่ เพราะฝั่งแสดงผล (UI.formatDateTime) แปลง UTC -> เวลาไทย (+7) ให้อยู่แล้ว
+// ถ้าบวกซ้ำ เวลาที่แสดงบนเอกสารจะเกินเวลาจริง 7 ชั่วโมง
 function getThailandTime() {
-    const now = new Date();
-    const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-    return thTime.toISOString();
+    return new Date().toISOString();
 }
 
-// Get current month in Thailand timezone (YYYY-MM format)
+// เดือนปัจจุบันตามปฏิทินไทย (YYYY-MM) - ใช้นับโควตา EmailJS รายเดือน
+// ที่นี่ +7 ถูกต้องแล้ว เพราะต้องการ "เดือนตามเวลาไทย" ไม่ใช่ timestamp ที่เก็บลง DB
 function getThailandMonth() {
     const now = new Date();
     const thTime = new Date(now.getTime() + (7 * 60 * 60 * 1000));
